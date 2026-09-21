@@ -55,8 +55,32 @@ class Program
         doctorManager.Add(d4);
         doctorManager.DisplayAll();
         Console.WriteLine();
+        DemoAppointments();
         MainMenu();
         Console.WriteLine("До побачення!");
+    }
+
+    static void DemoAppointments()
+    {
+        Console.WriteLine("=== Кінцевий автомат статусу запису ===");
+        DateTime tomorrow = DateTime.Today.AddDays(1);
+        Appointment a1 = new Appointment(1, 1, tomorrow.AddHours(9));        // тривалість за замовчуванням 30 хв
+        Appointment a2 = new Appointment(2, 2, tomorrow.AddHours(11), 45);
+
+        Console.WriteLine(a1);
+        Console.WriteLine(a2);
+
+        Console.WriteLine($"a1.Cancel(\"Пацієнт захворів\"): {a1.Cancel("Пацієнт захворів")}");
+        Console.WriteLine($"a1.Cancel() повторно: {a1.Cancel()}");                 // false
+        Console.WriteLine($"a1.Complete() для скасованого: {a1.Complete()}");      // false
+        Console.WriteLine($"a2.Complete(): {a2.Complete()}");
+        Console.WriteLine($"a2.Cancel() для завершеного: {a2.Cancel()}");          // false
+
+        Console.WriteLine(a1);
+        Console.WriteLine(a2);
+        Console.WriteLine($"a1.IsUpcoming: {a1.IsUpcoming}, a1.EndsAt: {a1.EndsAt.ToString("HH:mm")}");
+        Console.WriteLine("(у записі видно лише ID — імена покаже AppointmentManager)");
+        Console.WriteLine();
     }
 
     // ===== Головне меню =====
