@@ -7,6 +7,7 @@ namespace ClinicApp;
 class Program
 {
     static PatientManager patientManager = new PatientManager();
+    static DoctorManager doctorManager = new DoctorManager();
     static bool inputClosed = false;
 
     static void Main()
@@ -48,30 +49,11 @@ class Program
         d4.WorkStartHour = 0;
         d4.WorkEndHour = 23;
 
-        Doctor[] doctors = { d1, d2, d3, d4 };
-        Console.WriteLine("=== Лікарі ===");
-        for (int i = 0; i < doctors.Length; i++)
-        {
-            Console.WriteLine(doctors[i]);
-        }
-
-        Console.WriteLine();
-        Console.WriteLine($"Зараз {DateTime.Now.ToString("HH:mm")}. Доступні лікарі:");
-        int availableCount = 0;
-        for (int i = 0; i < doctors.Length; i++)
-        {
-            if (doctors[i].IsAvailableNow)
-            {
-                Console.WriteLine($"  + {doctors[i].FullName} ({doctors[i].Speciality})");
-                availableCount++;
-            }
-        }
-        if (availableCount == 0)
-        {
-            Console.WriteLine("  зараз ніхто не працює");
-        }
-        Console.WriteLine($"Чи приймає {d1.FullName} о 12:00? {d1.CanAcceptAt(12)}");
-        Console.WriteLine($"Чи приймає {d1.FullName} о 20:00? {d1.CanAcceptAt(20)}");
+        doctorManager.Add(d1);
+        doctorManager.Add(d2);
+        doctorManager.Add(d3);
+        doctorManager.Add(d4);
+        doctorManager.DisplayAll();
         Console.WriteLine();
         MainMenu();
         Console.WriteLine("До побачення!");
@@ -85,6 +67,7 @@ class Program
             Console.WriteLine();
             Console.WriteLine("===== ГОЛОВНЕ МЕНЮ =====");
             Console.WriteLine("1. Пацієнти");
+            Console.WriteLine("2. Лікарі");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -92,6 +75,10 @@ class Program
             if (choice == "1")
             {
                 PatientsMenu();
+            }
+            else if (choice == "2")
+            {
+                DoctorsMenu();
             }
             else
             {
@@ -160,6 +147,80 @@ class Program
             else if (choice == "5")
             {
                 patientManager.DisplayStats();
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
+        }
+    }
+
+    // ===== Підменю «Лікарі» =====
+    static void DoctorsMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("--- Лікарі ---");
+            Console.WriteLine("1. Показати всіх");
+            Console.WriteLine("2. Додати");
+            Console.WriteLine("3. Знайти за спеціальністю");
+            Console.WriteLine("4. Видалити");
+            Console.WriteLine("5. Статистика");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                doctorManager.DisplayAll();
+            }
+            else if (choice == "2")
+            {
+                string firstName = ReadText("Ім'я: ");
+                string lastName = ReadText("Прізвище: ");
+                string speciality = ReadText("Спеціальність: ");
+                string license = ReadText("Номер ліцензії: ");
+                string phone = ReadText("Телефон: ");
+                int? start = ReadInt("Година початку роботи (0-23): ");
+                if (start == null) continue;
+                int? end = ReadInt("Година кінця роботи (0-23): ");
+                if (end == null) continue;
+                if (start.Value < 0 || start.Value > 23 || end.Value < 0 || end.Value > 23 || start.Value >= end.Value)
+                {
+                    Console.WriteLine("Некоректний графік: години 0-23, початок раніше кінця.");
+                    continue;
+                }
+                Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
+                doctor.WorkStartHour = start.Value;
+                doctor.WorkEndHour = end.Value;
+                doctorManager.Add(doctor);
+            }
+            else if (choice == "3")
+            {
+                string query = ReadText("Спеціальність: ");
+                Doctor[] found = doctorManager.FindBySpeciality(query);
+                if (found.Length == 0)
+                {
+                    Console.WriteLine("Лікарів такої спеціальності не знайдено.");
+                }
+                for (int i = 0; i < found.Length; i++)
+                {
+                    Console.WriteLine(found[i]);
+                }
+            }
+            else if (choice == "4")
+            {
+                int? id = ReadInt("ID лікаря: ");
+                if (id == null) continue;
+                if (doctorManager.Remove(id.Value))
+                    Console.WriteLine("Лікаря видалено.");
+                else
+                    Console.WriteLine("Лікаря з таким ID не знайдено.");
+            }
+            else if (choice == "5")
+            {
+                doctorManager.DisplayStats();
             }
             else
             {
