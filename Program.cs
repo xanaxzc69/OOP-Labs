@@ -89,6 +89,7 @@ class Program
             Console.WriteLine("3. Записи");
             Console.WriteLine("4. Розклад на дату");
             Console.WriteLine("5. Звіт клініки");
+            Console.WriteLine("6. Зростаючий масив (демонстрація)");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -112,6 +113,10 @@ class Program
             else if (choice == "5")
             {
                 clinic.GenerateReport();
+            }
+            else if (choice == "6")
+            {
+                DemoGrowable();
             }
             else
             {
@@ -352,6 +357,24 @@ class Program
         DateTime? date = ReadDate("Дата (дд.мм.рррр, Enter — завтра): ", true);
         if (date == null) return;
         clinic.DisplaySchedule(date.Value);
+    }
+
+    // ===== Задача 8. Зростаючий масив =====
+    static void DemoGrowable()
+    {
+        Console.WriteLine("=== GrowablePatientManager: масив без ліміту ===");
+        GrowablePatientManager growable = new GrowablePatientManager();
+        Console.WriteLine($"Початкова місткість: {growable.Capacity}");
+
+        for (int i = 1; i <= 20; i++)
+        {
+            growable.Add(new Patient("Тестовий", "Пацієнт" + i));
+        }
+
+        Console.WriteLine($"Додано пацієнтів: {growable.Count}, місткість масиву: {growable.Capacity}");
+        Console.WriteLine($"Видалення пацієнта #{growable.GetAll()[0].Id}: {growable.Remove(growable.GetAll()[0].Id)}");
+        Console.WriteLine($"Залишилось: {growable.Count}");
+        Console.WriteLine("Ліміту немає: масив росте рівно тоді, коли заповнюється.");
     }
 
     // ===== Допоміжні методи вводу =====
