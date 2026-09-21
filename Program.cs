@@ -8,6 +8,7 @@ class Program
 {
     static PatientManager patientManager = new PatientManager();
     static DoctorManager doctorManager = new DoctorManager();
+    static AppointmentManager appointmentManager = new AppointmentManager(patientManager, doctorManager);
     static bool inputClosed = false;
 
     static void Main()
@@ -56,6 +57,21 @@ class Program
         doctorManager.DisplayAll();
         Console.WriteLine();
         DemoAppointments();
+
+        // Записи на завтра (майбутні)
+        DateTime tomorrow = DateTime.Today.AddDays(1);
+        appointmentManager.Book(1, 1, tomorrow.AddHours(9));
+        appointmentManager.Book(3, 2, tomorrow.AddHours(11), 45);
+        appointmentManager.Book(5, 3, tomorrow.AddHours(15));
+        appointmentManager.Book(2, 1, tomorrow.AddHours(10), 20);
+        appointmentManager.Book(4, 2, tomorrow.AddHours(12));
+
+        // Некоректні ID — менеджер їх відхиляє
+        appointmentManager.Book(99, 1, tomorrow.AddHours(13));
+        appointmentManager.Book(1, 99, tomorrow.AddHours(13));
+
+        appointmentManager.Cancel(4, "Пацієнт переніс візит");
+        Console.WriteLine();
         MainMenu();
         Console.WriteLine("До побачення!");
     }
@@ -92,6 +108,7 @@ class Program
             Console.WriteLine("===== ГОЛОВНЕ МЕНЮ =====");
             Console.WriteLine("1. Пацієнти");
             Console.WriteLine("2. Лікарі");
+            Console.WriteLine("3. Записи");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -103,6 +120,10 @@ class Program
             else if (choice == "2")
             {
                 DoctorsMenu();
+            }
+            else if (choice == "3")
+            {
+                AppointmentsMenu();
             }
             else
             {
@@ -245,6 +266,91 @@ class Program
             else if (choice == "5")
             {
                 doctorManager.DisplayStats();
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
+        }
+    }
+
+    // ===== Підменю «Записи» =====
+    static void AppointmentsMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("--- Записи ---");
+            Console.WriteLine("1. Показати всі");
+            Console.WriteLine("2. Записати пацієнта до лікаря");
+            Console.WriteLine("3. Скасувати запис");
+            Console.WriteLine("4. Завершити прийом");
+            Console.WriteLine("5. Записи пацієнта");
+            Console.WriteLine("6. Записи лікаря");
+            Console.WriteLine("7. Майбутні записи");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                appointmentManager.DisplayList(appointmentManager.GetAll());
+            }
+            else if (choice == "2")
+            {
+                patientManager.DisplayAll();
+                int? patientId = ReadInt("ID пацієнта: ");
+                if (patientId == null) continue;
+                doctorManager.DisplayAll();
+                int? doctorId = ReadInt("ID лікаря: ");
+                if (doctorId == null) continue;
+                DateTime? date = ReadDate("Дата (дд.мм.рррр): ");
+                if (date == null) continue;
+                int? hour = ReadInt("Година (0-23): ");
+                if (hour == null) continue;
+                if (hour.Value < 0 || hour.Value > 23)
+                {
+                    Console.WriteLine("Година має бути від 0 до 23.");
+                    continue;
+                }
+                int? duration = ReadInt("Тривалість у хвилинах (напр. 30): ");
+                if (duration == null) continue;
+                appointmentManager.Book(patientId.Value, doctorId.Value, date.Value.AddHours(hour.Value), duration.Value);
+            }
+            else if (choice == "3")
+            {
+                int? id = ReadInt("ID запису: ");
+                if (id == null) continue;
+                string reason = ReadText("Причина (можна пропустити): ");
+                if (appointmentManager.Cancel(id.Value, reason))
+                    Console.WriteLine("Запис скасовано.");
+                else
+                    Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
+            }
+            else if (choice == "4")
+            {
+                int? id = ReadInt("ID запису: ");
+                if (id == null) continue;
+                if (appointmentManager.Complete(id.Value))
+                    Console.WriteLine("Прийом завершено.");
+                else
+                    Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
+            }
+            else if (choice == "5")
+            {
+                int? id = ReadInt("ID пацієнта: ");
+                if (id == null) continue;
+                appointmentManager.DisplayList(appointmentManager.GetByPatient(id.Value));
+            }
+            else if (choice == "6")
+            {
+                int? id = ReadInt("ID лікаря: ");
+                if (id == null) continue;
+                appointmentManager.DisplayList(appointmentManager.GetByDoctor(id.Value));
+            }
+            else if (choice == "7")
+            {
+                appointmentManager.DisplayList(appointmentManager.GetUpcoming());
             }
             else
             {
