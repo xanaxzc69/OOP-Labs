@@ -6,9 +6,8 @@ namespace ClinicApp;
 
 class Program
 {
-    static PatientManager patientManager = new PatientManager();
-    static DoctorManager doctorManager = new DoctorManager();
-    static AppointmentManager appointmentManager = new AppointmentManager(patientManager, doctorManager);
+    // Уся робота програми — через єдиний об'єкт clinic
+    static Clinic clinic = new Clinic("Медична клініка «Здоров'я»");
     static bool inputClosed = false;
 
     static void Main()
@@ -20,6 +19,7 @@ class Program
         else
             Console.InputEncoding = Encoding.UTF8;
 
+        Console.WriteLine($"=== {clinic.Name} ===");
         // 5 пацієнтів, створених різними конструкторами
         Patient p1 = new Patient();                                                                  // без параметрів
         Patient p2 = new Patient("Іван", "Петренко");                                                // (firstName, lastName)
@@ -28,12 +28,12 @@ class Program
         Patient p5 = new Patient("Петро", "Бондар", new DateTime(1955, 7, 20), "B-", "0931112233");   // повний
         p3.Email = "olena.koval@gmail.com";
 
-        patientManager.Add(p1);
-        patientManager.Add(p2);
-        patientManager.Add(p3);
-        patientManager.Add(p4);
-        patientManager.Add(p5);
-        patientManager.DisplayAll();
+        clinic.Patients.Add(p1);
+        clinic.Patients.Add(p2);
+        clinic.Patients.Add(p3);
+        clinic.Patients.Add(p4);
+        clinic.Patients.Add(p5);
+        clinic.Patients.DisplayAll();
         Console.WriteLine();
 
         // Лікарі різними конструкторами
@@ -50,53 +50,31 @@ class Program
         d4.WorkStartHour = 0;
         d4.WorkEndHour = 23;
 
-        doctorManager.Add(d1);
-        doctorManager.Add(d2);
-        doctorManager.Add(d3);
-        doctorManager.Add(d4);
-        doctorManager.DisplayAll();
+        clinic.Doctors.Add(d1);
+        clinic.Doctors.Add(d2);
+        clinic.Doctors.Add(d3);
+        clinic.Doctors.Add(d4);
+        clinic.Doctors.DisplayAll();
         Console.WriteLine();
-        DemoAppointments();
-
         // Записи на завтра (майбутні)
         DateTime tomorrow = DateTime.Today.AddDays(1);
-        appointmentManager.Book(1, 1, tomorrow.AddHours(9));
-        appointmentManager.Book(3, 2, tomorrow.AddHours(11), 45);
-        appointmentManager.Book(5, 3, tomorrow.AddHours(15));
-        appointmentManager.Book(2, 1, tomorrow.AddHours(10), 20);
-        appointmentManager.Book(4, 2, tomorrow.AddHours(12));
+        clinic.Appointments.Book(1, 1, tomorrow.AddHours(9));
+        clinic.Appointments.Book(3, 2, tomorrow.AddHours(11), 45);
+        clinic.Appointments.Book(5, 3, tomorrow.AddHours(15));
+        clinic.Appointments.Book(2, 1, tomorrow.AddHours(10), 20);
+        clinic.Appointments.Book(4, 2, tomorrow.AddHours(12));
 
         // Некоректні ID — менеджер їх відхиляє
-        appointmentManager.Book(99, 1, tomorrow.AddHours(13));
-        appointmentManager.Book(1, 99, tomorrow.AddHours(13));
+        clinic.Appointments.Book(99, 1, tomorrow.AddHours(13));
+        clinic.Appointments.Book(1, 99, tomorrow.AddHours(13));
 
-        appointmentManager.Cancel(4, "Пацієнт переніс візит");
+        clinic.Appointments.Cancel(4, "Пацієнт переніс візит");
         Console.WriteLine();
+        clinic.DisplaySchedule(tomorrow);
+        Console.WriteLine();
+        clinic.GenerateReport();
         MainMenu();
         Console.WriteLine("До побачення!");
-    }
-
-    static void DemoAppointments()
-    {
-        Console.WriteLine("=== Кінцевий автомат статусу запису ===");
-        DateTime tomorrow = DateTime.Today.AddDays(1);
-        Appointment a1 = new Appointment(1, 1, tomorrow.AddHours(9));        // тривалість за замовчуванням 30 хв
-        Appointment a2 = new Appointment(2, 2, tomorrow.AddHours(11), 45);
-
-        Console.WriteLine(a1);
-        Console.WriteLine(a2);
-
-        Console.WriteLine($"a1.Cancel(\"Пацієнт захворів\"): {a1.Cancel("Пацієнт захворів")}");
-        Console.WriteLine($"a1.Cancel() повторно: {a1.Cancel()}");                 // false
-        Console.WriteLine($"a1.Complete() для скасованого: {a1.Complete()}");      // false
-        Console.WriteLine($"a2.Complete(): {a2.Complete()}");
-        Console.WriteLine($"a2.Cancel() для завершеного: {a2.Cancel()}");          // false
-
-        Console.WriteLine(a1);
-        Console.WriteLine(a2);
-        Console.WriteLine($"a1.IsUpcoming: {a1.IsUpcoming}, a1.EndsAt: {a1.EndsAt.ToString("HH:mm")}");
-        Console.WriteLine("(у записі видно лише ID — імена покаже AppointmentManager)");
-        Console.WriteLine();
     }
 
     // ===== Головне меню =====
@@ -109,6 +87,8 @@ class Program
             Console.WriteLine("1. Пацієнти");
             Console.WriteLine("2. Лікарі");
             Console.WriteLine("3. Записи");
+            Console.WriteLine("4. Розклад на дату");
+            Console.WriteLine("5. Звіт клініки");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -124,6 +104,14 @@ class Program
             else if (choice == "3")
             {
                 AppointmentsMenu();
+            }
+            else if (choice == "4")
+            {
+                ScheduleMenu();
+            }
+            else if (choice == "5")
+            {
+                clinic.GenerateReport();
             }
             else
             {
@@ -150,7 +138,7 @@ class Program
 
             if (choice == "1")
             {
-                patientManager.DisplayAll();
+                clinic.Patients.DisplayAll();
             }
             else if (choice == "2")
             {
@@ -165,12 +153,12 @@ class Program
                     Console.WriteLine("Ім'я та прізвище не можуть бути порожніми.");
                     continue;
                 }
-                patientManager.Add(new Patient(firstName, lastName, dob.Value, bloodType, phone));
+                clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType, phone));
             }
             else if (choice == "3")
             {
                 string query = ReadText("Введіть ім'я або прізвище: ");
-                Patient[] found = patientManager.FindByName(query);
+                Patient[] found = clinic.Patients.FindByName(query);
                 if (found.Length == 0)
                 {
                     Console.WriteLine("Нікого не знайдено.");
@@ -184,14 +172,14 @@ class Program
             {
                 int? id = ReadInt("ID пацієнта: ");
                 if (id == null) continue;
-                if (patientManager.Remove(id.Value))
+                if (clinic.Patients.Remove(id.Value))
                     Console.WriteLine("Пацієнта видалено.");
                 else
                     Console.WriteLine("Пацієнта з таким ID не знайдено.");
             }
             else if (choice == "5")
             {
-                patientManager.DisplayStats();
+                clinic.Patients.DisplayStats();
             }
             else
             {
@@ -218,7 +206,7 @@ class Program
 
             if (choice == "1")
             {
-                doctorManager.DisplayAll();
+                clinic.Doctors.DisplayAll();
             }
             else if (choice == "2")
             {
@@ -239,12 +227,12 @@ class Program
                 Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
                 doctor.WorkStartHour = start.Value;
                 doctor.WorkEndHour = end.Value;
-                doctorManager.Add(doctor);
+                clinic.Doctors.Add(doctor);
             }
             else if (choice == "3")
             {
                 string query = ReadText("Спеціальність: ");
-                Doctor[] found = doctorManager.FindBySpeciality(query);
+                Doctor[] found = clinic.Doctors.FindBySpeciality(query);
                 if (found.Length == 0)
                 {
                     Console.WriteLine("Лікарів такої спеціальності не знайдено.");
@@ -258,14 +246,14 @@ class Program
             {
                 int? id = ReadInt("ID лікаря: ");
                 if (id == null) continue;
-                if (doctorManager.Remove(id.Value))
+                if (clinic.Doctors.Remove(id.Value))
                     Console.WriteLine("Лікаря видалено.");
                 else
                     Console.WriteLine("Лікаря з таким ID не знайдено.");
             }
             else if (choice == "5")
             {
-                doctorManager.DisplayStats();
+                clinic.Doctors.DisplayStats();
             }
             else
             {
@@ -294,14 +282,14 @@ class Program
 
             if (choice == "1")
             {
-                appointmentManager.DisplayList(appointmentManager.GetAll());
+                clinic.Appointments.DisplayList(clinic.Appointments.GetAll());
             }
             else if (choice == "2")
             {
-                patientManager.DisplayAll();
+                clinic.Patients.DisplayAll();
                 int? patientId = ReadInt("ID пацієнта: ");
                 if (patientId == null) continue;
-                doctorManager.DisplayAll();
+                clinic.Doctors.DisplayAll();
                 int? doctorId = ReadInt("ID лікаря: ");
                 if (doctorId == null) continue;
                 DateTime? date = ReadDate("Дата (дд.мм.рррр): ");
@@ -315,14 +303,14 @@ class Program
                 }
                 int? duration = ReadInt("Тривалість у хвилинах (напр. 30): ");
                 if (duration == null) continue;
-                appointmentManager.Book(patientId.Value, doctorId.Value, date.Value.AddHours(hour.Value), duration.Value);
+                clinic.Appointments.Book(patientId.Value, doctorId.Value, date.Value.AddHours(hour.Value), duration.Value);
             }
             else if (choice == "3")
             {
                 int? id = ReadInt("ID запису: ");
                 if (id == null) continue;
                 string reason = ReadText("Причина (можна пропустити): ");
-                if (appointmentManager.Cancel(id.Value, reason))
+                if (clinic.Appointments.Cancel(id.Value, reason))
                     Console.WriteLine("Запис скасовано.");
                 else
                     Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
@@ -331,7 +319,7 @@ class Program
             {
                 int? id = ReadInt("ID запису: ");
                 if (id == null) continue;
-                if (appointmentManager.Complete(id.Value))
+                if (clinic.Appointments.Complete(id.Value))
                     Console.WriteLine("Прийом завершено.");
                 else
                     Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
@@ -340,23 +328,30 @@ class Program
             {
                 int? id = ReadInt("ID пацієнта: ");
                 if (id == null) continue;
-                appointmentManager.DisplayList(appointmentManager.GetByPatient(id.Value));
+                clinic.Appointments.DisplayList(clinic.Appointments.GetByPatient(id.Value));
             }
             else if (choice == "6")
             {
                 int? id = ReadInt("ID лікаря: ");
                 if (id == null) continue;
-                appointmentManager.DisplayList(appointmentManager.GetByDoctor(id.Value));
+                clinic.Appointments.DisplayList(clinic.Appointments.GetByDoctor(id.Value));
             }
             else if (choice == "7")
             {
-                appointmentManager.DisplayList(appointmentManager.GetUpcoming());
+                clinic.Appointments.DisplayList(clinic.Appointments.GetUpcoming());
             }
             else
             {
                 Console.WriteLine("Невідомий пункт меню.");
             }
         }
+    }
+
+    static void ScheduleMenu()
+    {
+        DateTime? date = ReadDate("Дата (дд.мм.рррр, Enter — завтра): ", true);
+        if (date == null) return;
+        clinic.DisplaySchedule(date.Value);
     }
 
     // ===== Допоміжні методи вводу =====
