@@ -6,6 +6,9 @@ namespace ClinicApp;
 
 class Program
 {
+    static PatientManager patientManager = new PatientManager();
+    static bool inputClosed = false;
+
     static void Main()
     {
         Console.OutputEncoding = Encoding.UTF8;
@@ -23,14 +26,12 @@ class Program
         Patient p5 = new Patient("Петро", "Бондар", new DateTime(1955, 7, 20), "B-", "0931112233");   // повний
         p3.Email = "olena.koval@gmail.com";
 
-        Console.WriteLine("=== Пацієнти ===");
-        Console.WriteLine(p1);
-        Console.WriteLine(p2);
-        Console.WriteLine(p3);
-        Console.WriteLine(p4);
-        Console.WriteLine(p5);
-        Console.WriteLine($"{p3.FullName}: дорослий? {p3.IsAdult}, email: {p3.Email}");
-        Console.WriteLine($"{p4.FullName}: дорослий? {p4.IsAdult}");
+        patientManager.Add(p1);
+        patientManager.Add(p2);
+        patientManager.Add(p3);
+        patientManager.Add(p4);
+        patientManager.Add(p5);
+        patientManager.DisplayAll();
         Console.WriteLine();
 
         // Лікарі різними конструкторами
@@ -72,5 +73,131 @@ class Program
         Console.WriteLine($"Чи приймає {d1.FullName} о 12:00? {d1.CanAcceptAt(12)}");
         Console.WriteLine($"Чи приймає {d1.FullName} о 20:00? {d1.CanAcceptAt(20)}");
         Console.WriteLine();
+        MainMenu();
+        Console.WriteLine("До побачення!");
+    }
+
+    // ===== Головне меню =====
+    static void MainMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("===== ГОЛОВНЕ МЕНЮ =====");
+            Console.WriteLine("1. Пацієнти");
+            Console.WriteLine("0. Вихід");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                PatientsMenu();
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
+        }
+    }
+
+    // ===== Підменю «Пацієнти» =====
+    static void PatientsMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("--- Пацієнти ---");
+            Console.WriteLine("1. Показати всіх");
+            Console.WriteLine("2. Додати");
+            Console.WriteLine("3. Знайти за ім'ям");
+            Console.WriteLine("4. Видалити");
+            Console.WriteLine("5. Статистика");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                patientManager.DisplayAll();
+            }
+            else if (choice == "2")
+            {
+                string firstName = ReadText("Ім'я: ");
+                string lastName = ReadText("Прізвище: ");
+                DateTime? dob = ReadDate("Дата народження (дд.мм.рррр): ");
+                if (dob == null) continue;
+                string bloodType = ReadText("Група крові (напр. A+): ");
+                string phone = ReadText("Телефон: ");
+                if (firstName.Length == 0 || lastName.Length == 0)
+                {
+                    Console.WriteLine("Ім'я та прізвище не можуть бути порожніми.");
+                    continue;
+                }
+                patientManager.Add(new Patient(firstName, lastName, dob.Value, bloodType, phone));
+            }
+            else if (choice == "3")
+            {
+                string query = ReadText("Введіть ім'я або прізвище: ");
+                Patient[] found = patientManager.FindByName(query);
+                if (found.Length == 0)
+                {
+                    Console.WriteLine("Нікого не знайдено.");
+                }
+                for (int i = 0; i < found.Length; i++)
+                {
+                    Console.WriteLine(found[i]);
+                }
+            }
+            else if (choice == "4")
+            {
+                int? id = ReadInt("ID пацієнта: ");
+                if (id == null) continue;
+                if (patientManager.Remove(id.Value))
+                    Console.WriteLine("Пацієнта видалено.");
+                else
+                    Console.WriteLine("Пацієнта з таким ID не знайдено.");
+            }
+            else if (choice == "5")
+            {
+                patientManager.DisplayStats();
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
+        }
+    }
+
+    // ===== Допоміжні методи вводу =====
+    static string ReadText(string prompt)
+    {
+        Console.Write(prompt);
+        string line = Console.ReadLine();
+        if (line == null)
+        {
+            inputClosed = true;   // ввід закінчився — меню завершиться
+            return "";
+        }
+        return line.Trim();
+    }
+
+    static int? ReadInt(string prompt)
+    {
+        string text = ReadText(prompt);
+        int value;
+        if (int.TryParse(text, out value)) return value;
+        if (!inputClosed) Console.WriteLine("Потрібно ввести ціле число.");
+        return null;
+    }
+
+    static DateTime? ReadDate(string prompt, bool emptyMeansTomorrow = false)
+    {
+        string text = ReadText(prompt);
+        if (text.Length == 0 && emptyMeansTomorrow && !inputClosed) return DateTime.Today.AddDays(1);
+        DateTime value;
+        if (DateTime.TryParseExact(text, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out value))
+            return value;
+        if (!inputClosed) Console.WriteLine("Некоректна дата. Формат: дд.мм.рррр");
+        return null;
     }
 }
