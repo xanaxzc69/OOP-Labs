@@ -26,6 +26,7 @@ class Program
         DemoEnums();
         DemoWorkSchedule();
         DemoFormatter();
+        DemoOverloads();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -156,6 +157,47 @@ class Program
     }
 
 
+    // ===== Задача 4. Перевантаження, out, ?. та ?? =====
+    static void DemoOverloads()
+    {
+        Console.WriteLine("=== Задача 4. Перевантаження методів і параметр out ===");
+
+        // Один і той самий виклик — різні методи, компілятор обирає за типом аргументу
+        Doctor[] byText = clinic.Doctors.FindBySpeciality("кард");
+        Doctor[] byEnum = clinic.Doctors.FindBySpeciality(Speciality.Cardiologist);
+        Console.WriteLine($"FindBySpeciality(\"кард\"): {byText.Length}; " +
+                          $"FindBySpeciality(Speciality.Cardiologist): {byEnum.Length}");
+
+        DateTime tomorrow = DateTime.Today.AddDays(1);
+        Appointment[] byDate = clinic.Appointments.GetByDate(tomorrow);
+        Appointment[] byNumbers = clinic.Appointments.GetByDate(tomorrow.Year, tomorrow.Month, tomorrow.Day);
+        Console.WriteLine($"GetByDate(DateTime): {byDate.Length}; GetByDate(рік, місяць, день): {byNumbers.Length}");
+
+        // Патерн TryXxx: bool + результат через out
+        Patient patient;
+        if (clinic.Patients.TryFindById(3, out patient))
+        {
+            Console.WriteLine($"TryFindById(3): знайдено {patient.FullName}");
+        }
+
+        Doctor doctor;
+        if (!clinic.Doctors.TryFindById(99, out doctor))
+        {
+            Console.WriteLine("TryFindById(99): лікаря немає, і це не помилка");
+        }
+
+        Patient[] aPositive = clinic.Patients.FindByBloodType(BloodType.APositive);
+        Console.WriteLine($"Пацієнтів з групою A+: {aPositive.Length}");
+
+        // ?. не звертається до null-об'єкта, ?? підставляє значення за замовчуванням
+        Patient missing = clinic.Patients[100];
+        Console.WriteLine($"Пацієнт №101: {missing?.FullName ?? "такого пацієнта немає"}");
+        Console.WriteLine($"Графік 51-го лікаря: {clinic.Doctors[50]?.Schedule.Display ?? "такого лікаря немає"}");
+        Console.WriteLine($"Email третього пацієнта: {clinic.Patients[2]?.Email ?? "не вказано"}");
+        Console.WriteLine();
+    }
+
+
     // ===== Головне меню =====
     static void MainMenu()
     {
@@ -194,6 +236,8 @@ class Program
             Console.WriteLine("4. Видалити");
             Console.WriteLine("5. Статистика");
             Console.WriteLine("6. Пацієнт за номером у списку (індексатор)");
+            Console.WriteLine("7. Знайти за ID");
+            Console.WriteLine("8. Знайти за групою крові");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -245,6 +289,24 @@ class Program
                 Patient patient = clinic.Patients[index.Value];
                 Console.WriteLine(patient != null ? patient.ToString() : "Пацієнта з таким номером немає.");
             }
+            else if (choice == "7")
+            {
+                int? id = ReadInt("ID пацієнта: ");
+                if (id == null) continue;
+                Patient patient;
+                if (clinic.Patients.TryFindById(id.Value, out patient))
+                    Console.WriteLine(patient);
+                else
+                    Console.WriteLine("Пацієнта з таким ID не знайдено.");
+            }
+            else if (choice == "8")
+            {
+                BloodType? bloodType = ReadEnum<BloodType>("Оберіть групу крові:");
+                if (bloodType == null) continue;
+                Patient[] found = clinic.Patients.FindByBloodType(bloodType.Value);
+                if (found.Length == 0) Console.WriteLine("Пацієнтів з такою групою крові немає.");
+                for (int i = 0; i < found.Length; i++) Console.WriteLine(found[i]);
+            }
             else
             {
                 Console.WriteLine("Невідомий пункт меню.");
@@ -265,6 +327,8 @@ class Program
             Console.WriteLine("4. Видалити");
             Console.WriteLine("5. Статистика");
             Console.WriteLine("6. Лікар за номером у списку (індексатор)");
+            Console.WriteLine("7. Знайти за спеціальністю (зі списку)");
+            Console.WriteLine("8. Знайти за ID");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -303,6 +367,24 @@ class Program
                 if (index == null) continue;
                 Doctor doctor = clinic.Doctors[index.Value];
                 Console.WriteLine(doctor != null ? doctor.ToString() : "Лікаря з таким номером немає.");
+            }
+            else if (choice == "7")
+            {
+                Speciality? speciality = ReadEnum<Speciality>("Оберіть спеціальність:");
+                if (speciality == null) continue;
+                Doctor[] found = clinic.Doctors.FindBySpeciality(speciality.Value);
+                if (found.Length == 0) Console.WriteLine("Лікарів такої спеціальності немає.");
+                for (int i = 0; i < found.Length; i++) Console.WriteLine(found[i]);
+            }
+            else if (choice == "8")
+            {
+                int? id = ReadInt("ID лікаря: ");
+                if (id == null) continue;
+                Doctor doctor;
+                if (clinic.Doctors.TryFindById(id.Value, out doctor))
+                    Console.WriteLine(doctor);
+                else
+                    Console.WriteLine("Лікаря з таким ID не знайдено.");
             }
             else
             {
@@ -353,6 +435,7 @@ class Program
             Console.WriteLine("5. Записи пацієнта");
             Console.WriteLine("6. Записи лікаря");
             Console.WriteLine("7. Майбутні записи");
+            Console.WriteLine("8. Записи на дату (рік, місяць, день)");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -416,6 +499,22 @@ class Program
             else if (choice == "7")
             {
                 clinic.Appointments.DisplayList(clinic.Appointments.GetUpcoming());
+            }
+            else if (choice == "8")
+            {
+                int? year = ReadInt("Рік: ");
+                if (year == null) continue;
+                int? month = ReadInt("Місяць: ");
+                if (month == null) continue;
+                int? day = ReadInt("День: ");
+                if (day == null) continue;
+                if (year.Value < 1 || year.Value > 9999 || month.Value < 1 || month.Value > 12 ||
+                    day.Value < 1 || day.Value > DateTime.DaysInMonth(year.Value, month.Value))
+                {
+                    Console.WriteLine("Некоректна дата.");
+                    continue;
+                }
+                clinic.Appointments.DisplayList(clinic.Appointments.GetByDate(year.Value, month.Value, day.Value));
             }
             else
             {

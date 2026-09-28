@@ -61,6 +61,40 @@ public class PatientManager
         return null;
     }
 
+    // Задача 4. Патерн TryXxx: метод повертає bool (успіх/невдача),
+    // а сам знайдений об'єкт віддає через параметр out.
+    public bool TryFindById(int id, out Patient patient)
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].Id == id)
+            {
+                patient = _patients[i];
+                return true;
+            }
+        }
+        patient = null;   // out-параметр треба присвоїти на всіх шляхах виконання
+        return false;
+    }
+
+    // Задача 4. Пошук за групою крові (точне співпадіння за enum)
+    public Patient[] FindByBloodType(BloodType bloodType)
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType) matches++;
+        }
+
+        Patient[] result = new Patient[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType) result[index++] = _patients[i];
+        }
+        return result;
+    }
+
     // Двопрохідний патерн: 1) рахуємо збіги, 2) заповнюємо масив точного розміру
     public Patient[] FindByName(string query)
     {

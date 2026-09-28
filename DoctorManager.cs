@@ -87,6 +87,41 @@ public class DoctorManager
         return result;
     }
 
+    // Задача 4. Перевантаження: та сама назва методу, але параметр — enum.
+    // Компілятор сам обирає потрібний варіант за типом аргументу.
+    // Тут співпадіння точне, без пошуку за частиною рядка.
+    public Doctor[] FindBySpeciality(Speciality speciality)
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality) matches++;
+        }
+
+        Doctor[] result = new Doctor[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality) result[index++] = _doctors[i];
+        }
+        return result;
+    }
+
+    // Задача 4. Патерн TryXxx з параметром out
+    public bool TryFindById(int id, out Doctor doctor)
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Id == id)
+            {
+                doctor = _doctors[i];
+                return true;
+            }
+        }
+        doctor = null;
+        return false;
+    }
+
     // Збіг за назвою enum ("Cardiologist") або за українською назвою ("Кардіологія")
     private static bool MatchesQuery(Speciality speciality, string loweredQuery)
     {

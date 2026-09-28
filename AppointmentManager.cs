@@ -141,6 +141,13 @@ public class AppointmentManager
         return result;
     }
 
+    // Задача 4. Перевантаження GetByDate: три числа замість DateTime.
+    // Щоб не дублювати логіку, викликаємо вже існуючий варіант.
+    public Appointment[] GetByDate(int year, int month, int day)
+    {
+        return GetByDate(new DateTime(year, month, day));
+    }
+
     public Appointment[] GetUpcoming()
     {
         int matches = 0;
