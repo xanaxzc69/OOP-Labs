@@ -2,7 +2,7 @@ using System;
 
 namespace ClinicApp;
 
-// Задача 1. Пацієнт медичної клініки
+// Пацієнт медичної клініки
 public class Patient
 {
     // Статичний лічильник — один для всіх екземплярів класу
@@ -14,14 +14,17 @@ public class Patient
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public DateTime DateOfBirth { get; set; }
-    public string BloodType { get; set; }
+
+    // Задача 1: замість string — перерахування BloodType
+    public BloodType BloodType { get; set; }
+
     public string Phone { get; set; }
     public string Email { get; set; } = "";
 
     // ---------- Конструктори з ланцюжком виклику ----------
 
     // Повний конструктор — уся ініціалізація тут
-    public Patient(string firstName, string lastName, DateTime dateOfBirth, string bloodType, string phone)
+    public Patient(string firstName, string lastName, DateTime dateOfBirth, BloodType bloodType, string phone)
     {
         Id = _nextId++;
         FirstName = firstName;
@@ -38,7 +41,7 @@ public class Patient
 
     // Ім'я та прізвище -> делегує повному конструктору зі значеннями за замовчуванням
     public Patient(string firstName, string lastName)
-        : this(firstName, lastName, new DateTime(2000, 1, 1), "Невідомо", "0000000000")
+        : this(firstName, lastName, new DateTime(2000, 1, 1), BloodType.Unknown, "0000000000")
     {
     }
 

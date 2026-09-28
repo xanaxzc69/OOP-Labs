@@ -20,12 +20,24 @@ class Program
             Console.InputEncoding = Encoding.UTF8;
 
         Console.WriteLine($"=== {clinic.Name} ===");
+        SeedPatients();
+        SeedDoctors();
+        SeedAppointments();
+        DemoEnums();
+        MainMenu();
+
+        Console.WriteLine("До побачення!");
+    }
+
+    // ===== Початкові дані =====
+    static void SeedPatients()
+    {
         // 5 пацієнтів, створених різними конструкторами
-        Patient p1 = new Patient();                                                                  // без параметрів
-        Patient p2 = new Patient("Іван", "Петренко");                                                // (firstName, lastName)
-        Patient p3 = new Patient("Олена", "Коваль", new DateTime(1985, 3, 14), "A+", "0671234567");   // повний
-        Patient p4 = new Patient("Марія", "Шевченко", new DateTime(2015, 11, 2), "O+", "0509876543"); // повний
-        Patient p5 = new Patient("Петро", "Бондар", new DateTime(1955, 7, 20), "B-", "0931112233");   // повний
+        Patient p1 = new Patient();                                      // без параметрів
+        Patient p2 = new Patient("Іван", "Петренко");                    // (firstName, lastName)
+        Patient p3 = new Patient("Олена", "Коваль", new DateTime(1985, 3, 14), BloodType.APositive, "0671234567");
+        Patient p4 = new Patient("Марія", "Шевченко", new DateTime(2015, 11, 2), BloodType.OPositive, "0509876543");
+        Patient p5 = new Patient("Петро", "Бондар", new DateTime(1955, 7, 20), BloodType.BNegative, "0931112233");
         p3.Email = "olena.koval@gmail.com";
 
         clinic.Patients.Add(p1);
@@ -35,20 +47,20 @@ class Program
         clinic.Patients.Add(p5);
         clinic.Patients.DisplayAll();
         Console.WriteLine();
+    }
 
-        // Лікарі різними конструкторами
-        Doctor d1 = new Doctor("Сергій", "Литвин", "Терапевт", "LIC-1001", "0671112233");
-        Doctor d2 = new Doctor("Ірина", "Ткач", "Кардіолог", "LIC-1002", "0502223344");
-        Doctor d3 = new Doctor("Андрій", "Гнатюк", "Хірург");
+    static void SeedDoctors()
+    {
+        Doctor d1 = new Doctor("Сергій", "Литвин", Speciality.Therapist, "LIC-1001", "0671112233");
+        Doctor d2 = new Doctor("Ірина", "Ткач", Speciality.Cardiologist, "LIC-1002", "0502223344");
+        Doctor d3 = new Doctor("Андрій", "Гнатюк", Speciality.Surgeon);
         Doctor d4 = new Doctor();
 
-        // Графік можна змінити після створення (публічні сетери)
+        // Графік можна змінити після створення
         d2.WorkStartHour = 10;
         d2.WorkEndHour = 18;
         d3.WorkStartHour = 14;
         d3.WorkEndHour = 22;
-        d4.WorkStartHour = 0;
-        d4.WorkEndHour = 23;
 
         clinic.Doctors.Add(d1);
         clinic.Doctors.Add(d2);
@@ -56,7 +68,10 @@ class Program
         clinic.Doctors.Add(d4);
         clinic.Doctors.DisplayAll();
         Console.WriteLine();
-        // Записи на завтра (майбутні)
+    }
+
+    static void SeedAppointments()
+    {
         DateTime tomorrow = DateTime.Today.AddDays(1);
         clinic.Appointments.Book(1, 1, tomorrow.AddHours(9));
         clinic.Appointments.Book(3, 2, tomorrow.AddHours(11), 45);
@@ -70,12 +85,29 @@ class Program
 
         clinic.Appointments.Cancel(4, "Пацієнт переніс візит");
         Console.WriteLine();
-        clinic.DisplaySchedule(tomorrow);
-        Console.WriteLine();
-        clinic.GenerateReport();
-        MainMenu();
-        Console.WriteLine("До побачення!");
     }
+
+    // ===== Задача 1. Enum замість магічних рядків =====
+    static void DemoEnums()
+    {
+        Console.WriteLine("=== Задача 1. Enum замість рядків ===");
+        Appointment[] all = clinic.Appointments.GetAll();
+        Console.WriteLine($"Статус першого запису: {all[0].Status}");
+        Console.WriteLine($"all[0].Status == AppointmentStatus.Scheduled -> {all[0].Status == AppointmentStatus.Scheduled}");
+
+        Console.Write("Усі стани запису:");
+        foreach (AppointmentStatus status in Enum.GetValues(typeof(AppointmentStatus)))
+        {
+            Console.Write(" " + status);
+        }
+        Console.WriteLine();
+
+        Console.WriteLine($"Значень у BloodType: {Enum.GetValues(typeof(BloodType)).Length}");
+        Console.WriteLine($"Значень у Speciality: {Enum.GetValues(typeof(Speciality)).Length}");
+        Console.WriteLine("Одруківку на кшталт \"Sheduled\" тепер не написати — не скомпілюється.");
+        Console.WriteLine();
+    }
+
 
     // ===== Головне меню =====
     static void MainMenu()
@@ -89,39 +121,16 @@ class Program
             Console.WriteLine("3. Записи");
             Console.WriteLine("4. Розклад на дату");
             Console.WriteLine("5. Звіт клініки");
-            Console.WriteLine("6. Зростаючий масив (демонстрація)");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
 
-            if (choice == "1")
-            {
-                PatientsMenu();
-            }
-            else if (choice == "2")
-            {
-                DoctorsMenu();
-            }
-            else if (choice == "3")
-            {
-                AppointmentsMenu();
-            }
-            else if (choice == "4")
-            {
-                ScheduleMenu();
-            }
-            else if (choice == "5")
-            {
-                clinic.GenerateReport();
-            }
-            else if (choice == "6")
-            {
-                DemoGrowable();
-            }
-            else
-            {
-                Console.WriteLine("Невідомий пункт меню.");
-            }
+            if (choice == "1") PatientsMenu();
+            else if (choice == "2") DoctorsMenu();
+            else if (choice == "3") AppointmentsMenu();
+            else if (choice == "4") ScheduleMenu();
+            else if (choice == "5") clinic.GenerateReport();
+            else Console.WriteLine("Невідомий пункт меню.");
         }
     }
 
@@ -151,27 +160,22 @@ class Program
                 string lastName = ReadText("Прізвище: ");
                 DateTime? dob = ReadDate("Дата народження (дд.мм.рррр): ");
                 if (dob == null) continue;
-                string bloodType = ReadText("Група крові (напр. A+): ");
+                BloodType? bloodType = ReadEnum<BloodType>("Оберіть групу крові:");
+                if (bloodType == null) continue;
                 string phone = ReadText("Телефон: ");
                 if (firstName.Length == 0 || lastName.Length == 0)
                 {
                     Console.WriteLine("Ім'я та прізвище не можуть бути порожніми.");
                     continue;
                 }
-                clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType, phone));
+                clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType.Value, phone));
             }
             else if (choice == "3")
             {
                 string query = ReadText("Введіть ім'я або прізвище: ");
                 Patient[] found = clinic.Patients.FindByName(query);
-                if (found.Length == 0)
-                {
-                    Console.WriteLine("Нікого не знайдено.");
-                }
-                for (int i = 0; i < found.Length; i++)
-                {
-                    Console.WriteLine(found[i]);
-                }
+                if (found.Length == 0) Console.WriteLine("Нікого не знайдено.");
+                for (int i = 0; i < found.Length; i++) Console.WriteLine(found[i]);
             }
             else if (choice == "4")
             {
@@ -202,7 +206,7 @@ class Program
             Console.WriteLine("--- Лікарі ---");
             Console.WriteLine("1. Показати всіх");
             Console.WriteLine("2. Додати");
-            Console.WriteLine("3. Знайти за спеціальністю");
+            Console.WriteLine("3. Знайти за спеціальністю (текст)");
             Console.WriteLine("4. Видалити");
             Console.WriteLine("5. Статистика");
             Console.WriteLine("0. Назад");
@@ -215,37 +219,14 @@ class Program
             }
             else if (choice == "2")
             {
-                string firstName = ReadText("Ім'я: ");
-                string lastName = ReadText("Прізвище: ");
-                string speciality = ReadText("Спеціальність: ");
-                string license = ReadText("Номер ліцензії: ");
-                string phone = ReadText("Телефон: ");
-                int? start = ReadInt("Година початку роботи (0-23): ");
-                if (start == null) continue;
-                int? end = ReadInt("Година кінця роботи (0-23): ");
-                if (end == null) continue;
-                if (start.Value < 0 || start.Value > 23 || end.Value < 0 || end.Value > 23 || start.Value >= end.Value)
-                {
-                    Console.WriteLine("Некоректний графік: години 0-23, початок раніше кінця.");
-                    continue;
-                }
-                Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
-                doctor.WorkStartHour = start.Value;
-                doctor.WorkEndHour = end.Value;
-                clinic.Doctors.Add(doctor);
+                AddDoctorFromConsole();
             }
             else if (choice == "3")
             {
-                string query = ReadText("Спеціальність: ");
+                string query = ReadText("Спеціальність (частина назви): ");
                 Doctor[] found = clinic.Doctors.FindBySpeciality(query);
-                if (found.Length == 0)
-                {
-                    Console.WriteLine("Лікарів такої спеціальності не знайдено.");
-                }
-                for (int i = 0; i < found.Length; i++)
-                {
-                    Console.WriteLine(found[i]);
-                }
+                if (found.Length == 0) Console.WriteLine("Лікарів не знайдено.");
+                for (int i = 0; i < found.Length; i++) Console.WriteLine(found[i]);
             }
             else if (choice == "4")
             {
@@ -266,6 +247,32 @@ class Program
             }
         }
     }
+
+    static void AddDoctorFromConsole()
+    {
+        string firstName = ReadText("Ім'я: ");
+        string lastName = ReadText("Прізвище: ");
+        Speciality? speciality = ReadEnum<Speciality>("Оберіть спеціальність:");
+        if (speciality == null) return;
+        string license = ReadText("Номер ліцензії: ");
+        string phone = ReadText("Телефон: ");
+        int? start = ReadInt("Година початку роботи (0-23): ");
+        if (start == null) return;
+        int? end = ReadInt("Година кінця роботи (0-23): ");
+        if (end == null) return;
+
+        Doctor doctor = new Doctor(firstName, lastName, speciality.Value, license, phone);
+
+        if (start.Value < 0 || start.Value > 23 || end.Value < 0 || end.Value > 23 || start.Value >= end.Value)
+        {
+            Console.WriteLine("Некоректний графік: години 0-23, початок раніше за кінець.");
+            return;
+        }
+        doctor.WorkStartHour = start.Value;
+        doctor.WorkEndHour = end.Value;
+        clinic.Doctors.Add(doctor);
+    }
+
 
     // ===== Підменю «Записи» =====
     static void AppointmentsMenu()
@@ -318,7 +325,7 @@ class Program
                 if (clinic.Appointments.Cancel(id.Value, reason))
                     Console.WriteLine("Запис скасовано.");
                 else
-                    Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
+                    Console.WriteLine("Неможливо: запис не знайдено або він уже не Scheduled.");
             }
             else if (choice == "4")
             {
@@ -327,7 +334,7 @@ class Program
                 if (clinic.Appointments.Complete(id.Value))
                     Console.WriteLine("Прийом завершено.");
                 else
-                    Console.WriteLine("Неможливо: запис не знайдено або він уже не в стані Scheduled.");
+                    Console.WriteLine("Неможливо: запис не знайдено або він уже не Scheduled.");
             }
             else if (choice == "5")
             {
@@ -357,24 +364,6 @@ class Program
         DateTime? date = ReadDate("Дата (дд.мм.рррр, Enter — завтра): ", true);
         if (date == null) return;
         clinic.DisplaySchedule(date.Value);
-    }
-
-    // ===== Задача 8. Зростаючий масив =====
-    static void DemoGrowable()
-    {
-        Console.WriteLine("=== GrowablePatientManager: масив без ліміту ===");
-        GrowablePatientManager growable = new GrowablePatientManager();
-        Console.WriteLine($"Початкова місткість: {growable.Capacity}");
-
-        for (int i = 1; i <= 20; i++)
-        {
-            growable.Add(new Patient("Тестовий", "Пацієнт" + i));
-        }
-
-        Console.WriteLine($"Додано пацієнтів: {growable.Count}, місткість масиву: {growable.Capacity}");
-        Console.WriteLine($"Видалення пацієнта #{growable.GetAll()[0].Id}: {growable.Remove(growable.GetAll()[0].Id)}");
-        Console.WriteLine($"Залишилось: {growable.Count}");
-        Console.WriteLine("Ліміту немає: масив росте рівно тоді, коли заповнюється.");
     }
 
     // ===== Допоміжні методи вводу =====
@@ -408,5 +397,24 @@ class Program
             return value;
         if (!inputClosed) Console.WriteLine("Некоректна дата. Формат: дд.мм.рррр");
         return null;
+    }
+
+    // Вибір значення перерахування зі списку
+    static T? ReadEnum<T>(string title) where T : struct, Enum
+    {
+        T[] values = (T[])Enum.GetValues(typeof(T));
+        Console.WriteLine(title);
+        for (int i = 0; i < values.Length; i++)
+        {
+            Console.WriteLine($"  {i + 1}. {values[i]}");
+        }
+        int? choice = ReadInt("Номер: ");
+        if (choice == null) return null;
+        if (choice.Value < 1 || choice.Value > values.Length)
+        {
+            Console.WriteLine("Некоректний номер.");
+            return null;
+        }
+        return values[choice.Value - 1];
     }
 }

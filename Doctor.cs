@@ -2,7 +2,7 @@ using System;
 
 namespace ClinicApp;
 
-// Задача 2. Лікар клініки з робочим графіком
+// Лікар клініки з робочим графіком
 public class Doctor
 {
     private static int _nextId = 1;
@@ -11,19 +11,21 @@ public class Doctor
 
     public string FirstName { get; set; }
     public string LastName { get; set; }
-    public string Speciality { get; set; }
+
+    // Задача 1: замість string — перерахування Speciality
+    public Speciality Speciality { get; set; }
+
     public string LicenseNumber { get; set; }
     public string Phone { get; set; }
 
-    // Робочий графік: година початку і кінця (ціле число від 0 до 23).
-    // Публічні сетери — графік можна змінити після створення лікаря.
+    // Робочий графік: година початку і кінця (ціле число від 0 до 23)
     public int WorkStartHour { get; set; }
     public int WorkEndHour { get; set; }
 
     // ---------- Конструктори ----------
 
     // Повний конструктор. Графік за замовчуванням: 8:00–17:00
-    public Doctor(string firstName, string lastName, string speciality, string licenseNumber, string phone)
+    public Doctor(string firstName, string lastName, Speciality speciality, string licenseNumber, string phone)
     {
         Id = _nextId++;
         FirstName = firstName;
@@ -36,12 +38,12 @@ public class Doctor
     }
 
     // Без параметрів -> делегує повному з дефолтними значеннями
-    public Doctor() : this("Невідомий", "Лікар", "Терапевт", "Без ліцензії", "0000000000")
+    public Doctor() : this("Невідомий", "Лікар", Speciality.Therapist, "Без ліцензії", "0000000000")
     {
     }
 
     // Ім'я, прізвище, спеціальність -> делегує повному
-    public Doctor(string firstName, string lastName, string speciality)
+    public Doctor(string firstName, string lastName, Speciality speciality)
         : this(firstName, lastName, speciality, "Без ліцензії", "0000000000")
     {
     }

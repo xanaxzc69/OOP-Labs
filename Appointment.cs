@@ -2,11 +2,11 @@ using System;
 
 namespace ClinicApp;
 
-// Задача 5. Запис пацієнта до лікаря.
+// Запис пацієнта до лікаря.
 // Статус — кінцевий автомат:
-//   "Scheduled" -> "Cancelled"  або  "Scheduled" -> "Completed"  (лише один раз)
-// Клас зберігає тільки PatientId і DoctorId, а не посилання на об'єкти —
-// тому ToString() показує лише числа (це вирішується в AppointmentManager).
+//   Scheduled -> Cancelled  або  Scheduled -> Completed  (лише один раз).
+// Задача 1: статус тепер не рядок, а enum AppointmentStatus,
+// тому неможливо присвоїти неіснуючий стан — це перевіряє компілятор.
 public class Appointment
 {
     private static int _nextId = 1;
@@ -18,7 +18,7 @@ public class Appointment
     public int DurationMinutes { get; }
 
     // Ззовні — тільки читання; змінюються лише через Cancel()/Complete()
-    public string Status { get; private set; }
+    public AppointmentStatus Status { get; private set; }
     public string Notes { get; private set; } = "";
 
     // durationMinutes — необов'язковий параметр, за замовчуванням 30 хв
@@ -29,24 +29,24 @@ public class Appointment
         DoctorId = doctorId;
         ScheduledAt = scheduledAt;
         DurationMinutes = durationMinutes;
-        Status = "Scheduled";
+        Status = AppointmentStatus.Scheduled;
     }
 
     // ---------- Обчислювані властивості ----------
 
     public DateTime EndsAt => ScheduledAt.AddMinutes(DurationMinutes);
 
-    public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == "Scheduled";
+    public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
 
     // ---------- Переходи стану ----------
 
     public bool Cancel(string reason = "")
     {
-        if (Status != "Scheduled")
+        if (Status != AppointmentStatus.Scheduled)
         {
             return false;
         }
-        Status = "Cancelled";
+        Status = AppointmentStatus.Cancelled;
         if (reason.Length > 0)
         {
             Notes = reason;
@@ -56,11 +56,11 @@ public class Appointment
 
     public bool Complete()
     {
-        if (Status != "Scheduled")
+        if (Status != AppointmentStatus.Scheduled)
         {
             return false;
         }
-        Status = "Completed";
+        Status = AppointmentStatus.Completed;
         return true;
     }
 

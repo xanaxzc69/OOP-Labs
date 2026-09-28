@@ -50,6 +50,7 @@ public class DoctorManager
         return null;
     }
 
+    // Пошук за рядком (часткове співпадіння з назвою спеціальності).
     // Двопрохідний патерн: 1) рахуємо збіги, 2) заповнюємо масив точного розміру
     public Doctor[] FindBySpeciality(string query)
     {
@@ -58,7 +59,7 @@ public class DoctorManager
         int matches = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(q))
+            if (_doctors[i].Speciality.ToString().ToLower().Contains(q))
             {
                 matches++;
             }
@@ -68,7 +69,7 @@ public class DoctorManager
         int index = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(q))
+            if (_doctors[i].Speciality.ToString().ToLower().Contains(q))
             {
                 result[index++] = _doctors[i];
             }
