@@ -24,6 +24,7 @@ class Program
         SeedDoctors();
         SeedAppointments();
         DemoEnums();
+        DemoWorkSchedule();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -56,11 +57,9 @@ class Program
         Doctor d3 = new Doctor("Андрій", "Гнатюк", Speciality.Surgeon);
         Doctor d4 = new Doctor();
 
-        // Графік можна змінити після створення
-        d2.WorkStartHour = 10;
-        d2.WorkEndHour = 18;
-        d3.WorkStartHour = 14;
-        d3.WorkEndHour = 22;
+        // Задача 2: графік — одне значення типу WorkSchedule
+        d2.Schedule = new WorkSchedule(10, 18);
+        d3.Schedule = new WorkSchedule(14, 22);
 
         clinic.Doctors.Add(d1);
         clinic.Doctors.Add(d2);
@@ -105,6 +104,34 @@ class Program
         Console.WriteLine($"Значень у BloodType: {Enum.GetValues(typeof(BloodType)).Length}");
         Console.WriteLine($"Значень у Speciality: {Enum.GetValues(typeof(Speciality)).Length}");
         Console.WriteLine("Одруківку на кшталт \"Sheduled\" тепер не написати — не скомпілюється.");
+        Console.WriteLine();
+    }
+
+
+    // ===== Задача 2. struct WorkSchedule =====
+    static void DemoWorkSchedule()
+    {
+        Console.WriteLine("=== Задача 2. struct WorkSchedule (value type) ===");
+        Doctor doctor = clinic.Doctors.GetAll()[0];
+
+        WorkSchedule copy = doctor.Schedule;            // структура копіюється при присвоєнні
+        doctor.Schedule = new WorkSchedule(7, 15);      // міняємо графік лікаря
+
+        Console.WriteLine($"Графік лікаря тепер: {doctor.Schedule.Display}");
+        Console.WriteLine($"Зроблена раніше копія не змінилась: {copy.Display}");
+        Console.WriteLine($"Годин на день: {doctor.Schedule.HoursPerDay}, працює зараз: {doctor.Schedule.IsNow}");
+        Console.WriteLine($"Contains(8): {doctor.Schedule.Contains(8)}, Contains(20): {doctor.Schedule.Contains(20)}");
+        Console.WriteLine($"ToString(): {doctor.Schedule}");
+
+        try
+        {
+            WorkSchedule nonsense = new WorkSchedule(20, 6);
+            Console.WriteLine(nonsense.Display);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Графік 20–6 відхилено: {ex.Message}");
+        }
         Console.WriteLine();
     }
 
@@ -263,13 +290,15 @@ class Program
 
         Doctor doctor = new Doctor(firstName, lastName, speciality.Value, license, phone);
 
-        if (start.Value < 0 || start.Value > 23 || end.Value < 0 || end.Value > 23 || start.Value >= end.Value)
+        try
         {
-            Console.WriteLine("Некоректний графік: години 0-23, початок раніше за кінець.");
+            doctor.Schedule = new WorkSchedule(start.Value, end.Value);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine("Некоректний графік: " + ex.Message);
             return;
         }
-        doctor.WorkStartHour = start.Value;
-        doctor.WorkEndHour = end.Value;
         clinic.Doctors.Add(doctor);
     }
 

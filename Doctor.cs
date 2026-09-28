@@ -18,9 +18,9 @@ public class Doctor
     public string LicenseNumber { get; set; }
     public string Phone { get; set; }
 
-    // Робочий графік: година початку і кінця (ціле число від 0 до 23)
-    public int WorkStartHour { get; set; }
-    public int WorkEndHour { get; set; }
+    // Задача 2: два окремих поля WorkStartHour/WorkEndHour замінено
+    // одним нероздільним значенням типу WorkSchedule
+    public WorkSchedule Schedule { get; set; }
 
     // ---------- Конструктори ----------
 
@@ -33,8 +33,7 @@ public class Doctor
         Speciality = speciality;
         LicenseNumber = licenseNumber;
         Phone = phone;
-        WorkStartHour = 8;
-        WorkEndHour = 17;
+        Schedule = new WorkSchedule(8, 17);
     }
 
     // Без параметрів -> делегує повному з дефолтними значеннями
@@ -52,23 +51,21 @@ public class Doctor
 
     public string FullName => FirstName + " " + LastName;
 
-    public int WorkingHoursPerDay => WorkEndHour - WorkStartHour;
+    // Робота з графіком делегується структурі WorkSchedule
+    public int WorkingHoursPerDay => Schedule.HoursPerDay;
 
-    public string WorkSchedule => WorkStartHour.ToString("D2") + ":00–" + WorkEndHour.ToString("D2") + ":00";
-
-    // Чи працює лікар прямо зараз
-    public bool IsAvailableNow => DateTime.Now.Hour >= WorkStartHour && DateTime.Now.Hour < WorkEndHour;
+    public bool IsAvailableNow => Schedule.IsNow;
 
     // Чи може лікар прийняти пацієнта у задану годину
     public bool CanAcceptAt(int hour)
     {
-        return hour >= WorkStartHour && hour < WorkEndHour;
+        return Schedule.Contains(hour);
     }
 
     public override string ToString()
     {
         string status = IsAvailableNow ? "доступний зараз" : "недоступний зараз";
         return $"[{Id}] {FullName} | {Speciality} | {LicenseNumber} | Тел: {Phone} | " +
-               $"{WorkSchedule} ({WorkingHoursPerDay} год) | {status}";
+               $"{Schedule.Display} ({WorkingHoursPerDay} год) | {status}";
     }
 }
