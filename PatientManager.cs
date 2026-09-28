@@ -12,6 +12,17 @@ public class PatientManager
 
     public int Count => _count;
 
+    // Задача 3. Індексатор: clinic.Patients[2] замість FindById(3).
+    // Якщо індексу немає — повертаємо null (зручно для ?. та ??).
+    public Patient this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _count) return null;
+            return _patients[index];
+        }
+    }
+
     // ---------- Create ----------
     public bool Add(Patient patient)
     {

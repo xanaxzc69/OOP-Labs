@@ -52,7 +52,7 @@ public class Clinic
                     count++;
                 }
             }
-            Console.WriteLine($"  {allDoctors[i].FullName} ({allDoctors[i].Speciality}): {count} записів");
+            Console.WriteLine($"  {allDoctors[i].FullName} ({ClinicFormatter.FormatSpeciality(allDoctors[i].Speciality)}): {count} записів");
         }
         Console.WriteLine("==========================================");
     }

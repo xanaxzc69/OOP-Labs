@@ -12,6 +12,16 @@ public class DoctorManager
 
     public int Count => _count;
 
+    // Задача 3. Індексатор — доступ до лікаря за порядковим номером
+    public Doctor this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _count) return null;
+            return _doctors[index];
+        }
+    }
+
     // ---------- Create ----------
     public bool Add(Doctor doctor)
     {
@@ -59,7 +69,7 @@ public class DoctorManager
         int matches = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToString().ToLower().Contains(q))
+            if (MatchesQuery(_doctors[i].Speciality, q))
             {
                 matches++;
             }
@@ -69,12 +79,19 @@ public class DoctorManager
         int index = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToString().ToLower().Contains(q))
+            if (MatchesQuery(_doctors[i].Speciality, q))
             {
                 result[index++] = _doctors[i];
             }
         }
         return result;
+    }
+
+    // Збіг за назвою enum ("Cardiologist") або за українською назвою ("Кардіологія")
+    private static bool MatchesQuery(Speciality speciality, string loweredQuery)
+    {
+        return speciality.ToString().ToLower().Contains(loweredQuery)
+            || ClinicFormatter.FormatSpeciality(speciality).ToLower().Contains(loweredQuery);
     }
 
     // ---------- Delete ----------
@@ -155,7 +172,7 @@ public class DoctorManager
                     specialityCount++;
                 }
             }
-            Console.WriteLine($"  {_doctors[i].Speciality}: {specialityCount}");
+            Console.WriteLine($"  {ClinicFormatter.FormatSpeciality(_doctors[i].Speciality)}: {specialityCount}");
         }
     }
 }

@@ -25,6 +25,7 @@ class Program
         SeedAppointments();
         DemoEnums();
         DemoWorkSchedule();
+        DemoFormatter();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -136,6 +137,25 @@ class Program
     }
 
 
+    // ===== Задача 3. Статичний клас та індексатори =====
+    static void DemoFormatter()
+    {
+        Console.WriteLine("=== Задача 3. ClinicFormatter та індексатор ===");
+        Console.WriteLine($"{BloodType.APositive} -> {ClinicFormatter.FormatBloodType(BloodType.APositive)}");
+        Console.WriteLine($"{BloodType.BNegative} -> {ClinicFormatter.FormatBloodType(BloodType.BNegative)}");
+        Console.WriteLine($"{Speciality.Cardiologist} -> {ClinicFormatter.FormatSpeciality(Speciality.Cardiologist)}");
+        Console.WriteLine($"Вік: {ClinicFormatter.FormatAge(41)}, {ClinicFormatter.FormatAge(33)}, " +
+                          $"{ClinicFormatter.FormatAge(16)}, {ClinicFormatter.FormatAge(11)}");
+        Console.WriteLine($"Телефон: 0501234567 -> {ClinicFormatter.FormatPhone("0501234567")}");
+
+        // Індексатор: замість FindById(3) — просто [2]
+        Console.WriteLine($"clinic.Patients[2]: {clinic.Patients[2]}");
+        Console.WriteLine($"clinic.Doctors[1]: {clinic.Doctors[1]}");
+        Console.WriteLine($"clinic.Appointments[0]: {clinic.Appointments[0]}");
+        Console.WriteLine();
+    }
+
+
     // ===== Головне меню =====
     static void MainMenu()
     {
@@ -173,6 +193,7 @@ class Program
             Console.WriteLine("3. Знайти за ім'ям");
             Console.WriteLine("4. Видалити");
             Console.WriteLine("5. Статистика");
+            Console.WriteLine("6. Пацієнт за номером у списку (індексатор)");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -217,6 +238,13 @@ class Program
             {
                 clinic.Patients.DisplayStats();
             }
+            else if (choice == "6")
+            {
+                int? index = ReadInt($"Номер у списку (0 - {clinic.Patients.Count - 1}): ");
+                if (index == null) continue;
+                Patient patient = clinic.Patients[index.Value];
+                Console.WriteLine(patient != null ? patient.ToString() : "Пацієнта з таким номером немає.");
+            }
             else
             {
                 Console.WriteLine("Невідомий пункт меню.");
@@ -236,6 +264,7 @@ class Program
             Console.WriteLine("3. Знайти за спеціальністю (текст)");
             Console.WriteLine("4. Видалити");
             Console.WriteLine("5. Статистика");
+            Console.WriteLine("6. Лікар за номером у списку (індексатор)");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -267,6 +296,13 @@ class Program
             else if (choice == "5")
             {
                 clinic.Doctors.DisplayStats();
+            }
+            else if (choice == "6")
+            {
+                int? index = ReadInt($"Номер у списку (0 - {clinic.Doctors.Count - 1}): ");
+                if (index == null) continue;
+                Doctor doctor = clinic.Doctors[index.Value];
+                Console.WriteLine(doctor != null ? doctor.ToString() : "Лікаря з таким номером немає.");
             }
             else
             {

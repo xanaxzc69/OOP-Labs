@@ -17,6 +17,16 @@ public class AppointmentManager
 
     public int Count => _count;
 
+    // Задача 3. Індексатор — доступ до запису за порядковим номером
+    public Appointment this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _count) return null;
+            return _appointments[index];
+        }
+    }
+
     // Зберігаємо посилання на вже існуючі менеджери (нових не створюємо)
     public AppointmentManager(PatientManager patients, DoctorManager doctors)
     {

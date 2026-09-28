@@ -77,6 +77,8 @@ public class Patient
 
     public override string ToString()
     {
-        return $"[{Id}] {FullName} | Вік: {Age} ({GetAgeCategory()}) | Кров: {BloodType} | Тел: {Phone}";
+        // Задача 3: форматування винесено у статичний клас ClinicFormatter
+        return $"[{Id}] {FullName} | Вік: {ClinicFormatter.FormatAge(Age)} ({GetAgeCategory()}) | " +
+               $"Кров: {ClinicFormatter.FormatBloodType(BloodType)} | Тел: {ClinicFormatter.FormatPhone(Phone)}";
     }
 }
