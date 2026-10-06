@@ -10,8 +10,9 @@ public class Patient
     // Статичний лічильник — один для всіх екземплярів класу
     private static int _nextId = 1;
 
-    // Задача 2: дані зберігаються у приватних полях,
-    // доступ до них — лише через властивості
+    // Задача 2: дані зберігаються у приватних полях, доступ — через властивості.
+    // Задача 3: сеттери перевіряють значення і кидають виняток,
+    // тому поле фізично не може отримати некоректне значення.
     private string _firstName;
     private string _lastName;
     private DateTime _dateOfBirth;
@@ -23,25 +24,58 @@ public class Patient
     public string FirstName
     {
         get { return _firstName; }
-        set { _firstName = value; }
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException($"Ім'я не може бути порожнім або складатися з пробілів");
+            if (value.Trim().Length > 50)
+                throw new ArgumentException($"Ім'я не може бути довшим за 50 символів");
+            _firstName = value.Trim();
+        }
     }
 
     public string LastName
     {
         get { return _lastName; }
-        set { _lastName = value; }
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException($"Прізвище не може бути порожнім або складатися з пробілів");
+            if (value.Trim().Length > 50)
+                throw new ArgumentException($"Прізвище не може бути довшим за 50 символів");
+            _lastName = value.Trim();
+        }
     }
 
     public DateTime DateOfBirth
     {
         get { return _dateOfBirth; }
-        set { _dateOfBirth = value; }
+        set
+        {
+            if (value.Date > DateTime.Today)
+                throw new ArgumentOutOfRangeException(nameof(DateOfBirth),
+                    "Дата народження не може бути в майбутньому");
+            if (value.Year < 1900)
+                throw new ArgumentOutOfRangeException(nameof(DateOfBirth),
+                    "Дата народження не може бути раніше 1900 року");
+            _dateOfBirth = value;
+        }
     }
 
     public string Phone
     {
         get { return _phone; }
-        set { _phone = value; }
+        set
+        {
+            if (value == null || value.Length != 10)
+                throw new ArgumentException("Телефон має містити рівно 10 символів");
+            foreach (char symbol in value)
+            {
+                if (!char.IsDigit(symbol))
+                    throw new ArgumentException("Телефон має складатися лише з цифр");
+            }
+            _phone = value;
+        }
     }
 
     // Перерахування BloodType — некоректне значення неможливе за типом

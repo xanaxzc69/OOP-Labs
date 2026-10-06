@@ -10,7 +10,8 @@ public class Appointment
 {
     private static int _nextId = 1;
 
-    // Задача 2: приватне поле + явна властивість через нього
+    // Задача 2: приватне поле + явна властивість через нього.
+    // Задача 3: сеттер не пропускає тривалість <= 0
     private int _durationMinutes;
 
     public int Id { get; }
@@ -21,7 +22,13 @@ public class Appointment
     public int DurationMinutes
     {
         get { return _durationMinutes; }
-        set { _durationMinutes = value; }
+        set
+        {
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(DurationMinutes),
+                    "Тривалість прийому має бути більшою за 0 хвилин");
+            _durationMinutes = value;
+        }
     }
 
     // Ззовні — тільки читання; змінюються лише через Cancel()/Complete()

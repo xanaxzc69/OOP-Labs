@@ -2,9 +2,8 @@ using System;
 
 namespace ClinicApp.Models;
 
-// Задача 2. Робочий графік як value type.
-// Дві пов'язані величини (початок і кінець) об'єднані в один нероздільний тип:
-// struct копіюється при присвоєнні, а не передається за посиланням.
+// Робочий графік як value type: дві пов'язані величини об'єднані
+// в один нероздільний тип; struct копіюється при присвоєнні.
 public struct WorkSchedule
 {
     // get-only властивості: після створення графік змінити не можна,
@@ -12,12 +11,16 @@ public struct WorkSchedule
     public int Start { get; }
     public int End { get; }
 
+    // Задача 3: конструктор не дозволяє створити безглуздий графік.
+    // Ці перевірки унікальні для WorkSchedule, тому лишаються на місці.
     public WorkSchedule(int start, int end)
     {
         if (start < 0 || start > 23)
-            throw new ArgumentException("Година початку має бути від 0 до 23");
-        if (end < 0 || end > 23)
-            throw new ArgumentException("Година кінця має бути від 0 до 23");
+            throw new ArgumentOutOfRangeException(nameof(start),
+                "Година початку роботи має бути від 0 до 23");
+        if (end < 1 || end > 24)
+            throw new ArgumentOutOfRangeException(nameof(end),
+                "Година кінця роботи має бути від 1 до 24");
         if (start >= end)
             throw new ArgumentException("Початок роботи має бути раніше за кінець");
 
