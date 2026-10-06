@@ -10,7 +10,7 @@ public class Doctor
     private static int _nextId = 1;
 
     // Задача 2: приватні поля + явні властивості через них.
-    // Задача 3: перевірка значень у сеттерах
+    // Задача 4: повторювані перевірки виконує ClinicValidator
     private string _firstName;
     private string _lastName;
     private string _licenseNumber;
@@ -23,10 +23,7 @@ public class Doctor
         get { return _firstName; }
         set
         {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException($"Ім'я не може бути порожнім або складатися з пробілів");
-            if (value.Trim().Length > 50)
-                throw new ArgumentException($"Ім'я не може бути довшим за 50 символів");
+            ClinicValidator.ValidateName(value, "Ім'я");
             _firstName = value.Trim();
         }
     }
@@ -36,10 +33,7 @@ public class Doctor
         get { return _lastName; }
         set
         {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException($"Прізвище не може бути порожнім або складатися з пробілів");
-            if (value.Trim().Length > 50)
-                throw new ArgumentException($"Прізвище не може бути довшим за 50 символів");
+            ClinicValidator.ValidateName(value, "Прізвище");
             _lastName = value.Trim();
         }
     }
@@ -61,13 +55,7 @@ public class Doctor
         get { return _phone; }
         set
         {
-            if (value == null || value.Length != 10)
-                throw new ArgumentException("Телефон має містити рівно 10 символів");
-            foreach (char symbol in value)
-            {
-                if (!char.IsDigit(symbol))
-                    throw new ArgumentException("Телефон має складатися лише з цифр");
-            }
+            ClinicValidator.ValidatePhone(value);
             _phone = value;
         }
     }

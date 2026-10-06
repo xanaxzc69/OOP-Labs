@@ -1,5 +1,6 @@
 using System;
 using ClinicApp.Enums;
+using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
@@ -11,7 +12,7 @@ public class Appointment
     private static int _nextId = 1;
 
     // Задача 2: приватне поле + явна властивість через нього.
-    // Задача 3: сеттер не пропускає тривалість <= 0
+    // Задача 4: перевірку виконує ClinicValidator
     private int _durationMinutes;
 
     public int Id { get; }
@@ -24,9 +25,7 @@ public class Appointment
         get { return _durationMinutes; }
         set
         {
-            if (value <= 0)
-                throw new ArgumentOutOfRangeException(nameof(DurationMinutes),
-                    "Тривалість прийому має бути більшою за 0 хвилин");
+            ClinicValidator.ValidatePositive(value, "Тривалість прийому");
             _durationMinutes = value;
         }
     }

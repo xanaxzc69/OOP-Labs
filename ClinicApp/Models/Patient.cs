@@ -11,8 +11,8 @@ public class Patient
     private static int _nextId = 1;
 
     // Задача 2: дані зберігаються у приватних полях, доступ — через властивості.
-    // Задача 3: сеттери перевіряють значення і кидають виняток,
-    // тому поле фізично не може отримати некоректне значення.
+    // Задача 4: однакові правила більше не дублюються в кожному сеттері —
+    // перевірку виконує ClinicValidator, а сеттер лише присвоює значення.
     private string _firstName;
     private string _lastName;
     private DateTime _dateOfBirth;
@@ -26,10 +26,7 @@ public class Patient
         get { return _firstName; }
         set
         {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException($"Ім'я не може бути порожнім або складатися з пробілів");
-            if (value.Trim().Length > 50)
-                throw new ArgumentException($"Ім'я не може бути довшим за 50 символів");
+            ClinicValidator.ValidateName(value, "Ім'я");
             _firstName = value.Trim();
         }
     }
@@ -39,10 +36,7 @@ public class Patient
         get { return _lastName; }
         set
         {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentException($"Прізвище не може бути порожнім або складатися з пробілів");
-            if (value.Trim().Length > 50)
-                throw new ArgumentException($"Прізвище не може бути довшим за 50 символів");
+            ClinicValidator.ValidateName(value, "Прізвище");
             _lastName = value.Trim();
         }
     }
@@ -52,12 +46,7 @@ public class Patient
         get { return _dateOfBirth; }
         set
         {
-            if (value.Date > DateTime.Today)
-                throw new ArgumentOutOfRangeException(nameof(DateOfBirth),
-                    "Дата народження не може бути в майбутньому");
-            if (value.Year < 1900)
-                throw new ArgumentOutOfRangeException(nameof(DateOfBirth),
-                    "Дата народження не може бути раніше 1900 року");
+            ClinicValidator.ValidateDate(value, "Дата народження");
             _dateOfBirth = value;
         }
     }
@@ -67,13 +56,7 @@ public class Patient
         get { return _phone; }
         set
         {
-            if (value == null || value.Length != 10)
-                throw new ArgumentException("Телефон має містити рівно 10 символів");
-            foreach (char symbol in value)
-            {
-                if (!char.IsDigit(symbol))
-                    throw new ArgumentException("Телефон має складатися лише з цифр");
-            }
+            ClinicValidator.ValidatePhone(value);
             _phone = value;
         }
     }

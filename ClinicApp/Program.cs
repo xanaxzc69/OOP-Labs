@@ -31,6 +31,7 @@ class Program
         DemoWorkSchedule();
         DemoFormatter();
         DemoOverloads();
+        DemoValidation();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -202,6 +203,47 @@ class Program
     }
 
 
+    // ===== Задачі 3–4. Валідація та перехоплення винятків =====
+    static void DemoValidation()
+    {
+        Console.WriteLine("=== Задачі 3–4. Інкапсуляція та валідація ===");
+
+        TryBlock("Порожнє ім'я", () => { Patient p = new Patient("", "Тест"); });
+        TryBlock("Ім'я довше 50 символів", () => { Patient p = new Patient(new string('А', 51), "Тест"); });
+        TryBlock("Телефон із 5 цифр", () => { clinic.Patients[0].Phone = "05012"; });
+        TryBlock("Телефон із літерами", () => { clinic.Patients[0].Phone = "05012ABCDE"; });
+        TryBlock("Дата народження в майбутньому",
+                 () => { clinic.Patients[0].DateOfBirth = DateTime.Today.AddYears(1); });
+        TryBlock("Дата народження раніше 1900 року",
+                 () => { clinic.Patients[0].DateOfBirth = new DateTime(1850, 5, 1); });
+        TryBlock("Порожній номер ліцензії", () => { clinic.Doctors[0].LicenseNumber = "   "; });
+        TryBlock("Тривалість прийому 0 хвилин",
+                 () => { Appointment a = new Appointment(1, 1, DateTime.Today.AddDays(1), 0); });
+        TryBlock("Графік 20–6", () => { WorkSchedule w = new WorkSchedule(20, 6); });
+        TryBlock("Графік із годиною 25", () => { WorkSchedule w = new WorkSchedule(9, 25); });
+
+        Console.WriteLine("Жоден із цих випадків не зіпсував дані — програма працює далі.");
+        Console.WriteLine();
+    }
+
+    // Виконує дію і показує, який виняток вона кинула
+    static void TryBlock(string title, Action action)
+    {
+        try
+        {
+            action();
+            Console.WriteLine($"  {title}: значення прийнято");
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            Console.WriteLine($"  {title} -> ArgumentOutOfRangeException: {ex.Message}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"  {title} -> ArgumentException: {ex.Message}");
+        }
+    }
+
     // ===== Головне меню =====
     static void MainMenu()
     {
@@ -259,12 +301,21 @@ class Program
                 BloodType? bloodType = ReadEnum<BloodType>("Оберіть групу крові:");
                 if (bloodType == null) continue;
                 string phone = ReadText("Телефон: ");
-                if (firstName.Length == 0 || lastName.Length == 0)
+
+                // Задача 4: дані вводить користувач, тому виняток із валідатора —
+                // очікувана ситуація. Перехоплюємо його і продовжуємо роботу.
+                try
                 {
-                    Console.WriteLine("Ім'я та прізвище не можуть бути порожніми.");
-                    continue;
+                    clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType.Value, phone));
                 }
-                clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType.Value, phone));
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    Console.WriteLine("Помилка: " + ex.Message);
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine("Помилка: " + ex.Message);
+                }
             }
             else if (choice == "3")
             {
@@ -410,18 +461,21 @@ class Program
         int? end = ReadInt("Година кінця роботи (0-23): ");
         if (end == null) return;
 
-        Doctor doctor = new Doctor(firstName, lastName, speciality.Value, license, phone);
-
+        // Задача 4: створення лікаря разом із графіком — в одному try/catch
         try
         {
+            Doctor doctor = new Doctor(firstName, lastName, speciality.Value, license, phone);
             doctor.Schedule = new WorkSchedule(start.Value, end.Value);
+            clinic.Doctors.Add(doctor);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            Console.WriteLine("Помилка: " + ex.Message);
         }
         catch (ArgumentException ex)
         {
-            Console.WriteLine("Некоректний графік: " + ex.Message);
-            return;
+            Console.WriteLine("Помилка: " + ex.Message);
         }
-        clinic.Doctors.Add(doctor);
     }
 
 
@@ -467,7 +521,21 @@ class Program
                 }
                 int? duration = ReadInt("Тривалість у хвилинах (напр. 30): ");
                 if (duration == null) continue;
-                clinic.Appointments.Book(patientId.Value, doctorId.Value, date.Value.AddHours(hour.Value), duration.Value);
+
+                // Задача 4: тривалість <= 0 кине виняток із сеттера Appointment
+                try
+                {
+                    clinic.Appointments.Book(patientId.Value, doctorId.Value,
+                                             date.Value.AddHours(hour.Value), duration.Value);
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    Console.WriteLine("Помилка: " + ex.Message);
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine("Помилка: " + ex.Message);
+                }
             }
             else if (choice == "3")
             {
