@@ -1,6 +1,7 @@
 using System;
+using ClinicApp.Models;
 
-namespace ClinicApp;
+namespace ClinicApp.Managers;
 
 // Задача 6. Менеджер записів.
 // Отримує посилання на PatientManager і DoctorManager через конструктор —

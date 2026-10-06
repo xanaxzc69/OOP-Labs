@@ -1,6 +1,9 @@
 using System;
+using ClinicApp.Models;
+using ClinicApp.Enums;
+using ClinicApp.Utils;
 
-namespace ClinicApp;
+namespace ClinicApp.Managers;
 
 // Задача 4. Колекція лікарів — той самий шаблон, що й PatientManager
 public class DoctorManager

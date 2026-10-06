@@ -1,6 +1,7 @@
 using System;
+using ClinicApp.Enums;
 
-namespace ClinicApp;
+namespace ClinicApp.Utils;
 
 // Задача 3. Логіка форматування не належить жодному конкретному об'єкту,
 // тому вона винесена в static class: у нього немає екземплярів,

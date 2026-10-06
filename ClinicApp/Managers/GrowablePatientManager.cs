@@ -1,6 +1,7 @@
 using System;
+using ClinicApp.Models;
 
-namespace ClinicApp;
+namespace ClinicApp.Managers;
 
 // Задача 8. Менеджер пацієнтів, у якому масив сам збільшується.
 // Жодного наперед заданого ліміту немає: коли масив заповнений

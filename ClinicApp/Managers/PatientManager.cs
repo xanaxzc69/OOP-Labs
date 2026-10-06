@@ -1,6 +1,8 @@
 using System;
+using ClinicApp.Models;
+using ClinicApp.Enums;
 
-namespace ClinicApp;
+namespace ClinicApp.Managers;
 
 // Задача 3. Колекція пацієнтів на масиві фіксованого розміру
 public class PatientManager

@@ -1,6 +1,8 @@
 using System;
+using ClinicApp.Enums;
+using ClinicApp.Utils;
 
-namespace ClinicApp;
+namespace ClinicApp.Models;
 
 // Лікар клініки з робочим графіком
 public class Doctor

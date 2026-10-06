@@ -1,4 +1,4 @@
-namespace ClinicApp;
+namespace ClinicApp.Enums;
 
 // Задача 1. Дев'ять значень: вісім груп крові + Unknown
 public enum BloodType

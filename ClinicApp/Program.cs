@@ -1,6 +1,10 @@
 using System;
 using System.Globalization;
 using System.Text;
+using ClinicApp.Enums;
+using ClinicApp.Managers;
+using ClinicApp.Models;
+using ClinicApp.Utils;
 
 namespace ClinicApp;
 

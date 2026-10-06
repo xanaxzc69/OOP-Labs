@@ -1,6 +1,6 @@
 using System;
 
-namespace ClinicApp;
+namespace ClinicApp.Models;
 
 // Задача 2. Робочий графік як value type.
 // Дві пов'язані величини (початок і кінець) об'єднані в один нероздільний тип:

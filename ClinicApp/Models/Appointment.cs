@@ -1,6 +1,7 @@
 using System;
+using ClinicApp.Enums;
 
-namespace ClinicApp;
+namespace ClinicApp.Models;
 
 // Запис пацієнта до лікаря.
 // Статус — кінцевий автомат:

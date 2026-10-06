@@ -1,4 +1,4 @@
-namespace ClinicApp;
+namespace ClinicApp.Enums;
 
 // Задача 1. Вісім спеціальностей лікаря
 public enum Speciality
