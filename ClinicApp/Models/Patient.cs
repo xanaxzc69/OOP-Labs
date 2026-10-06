@@ -17,6 +17,7 @@ public class Patient
     private string _lastName;
     private DateTime _dateOfBirth;
     private string _phone;
+    private string _email = "";
 
     // Id лише для читання, присвоюється тільки в конструкторі
     public int Id { get; }
@@ -64,7 +65,22 @@ public class Patient
     // Перерахування BloodType — некоректне значення неможливе за типом
     public BloodType BloodType { get; set; }
 
-    public string Email { get; set; } = "";
+    // Задача 5: порожній рядок означає «email невідомий» і дозволений,
+    // непорожній має пройти перевірку формату через Regex
+    public string Email
+    {
+        get { return _email; }
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                _email = "";
+                return;
+            }
+            ClinicValidator.ValidateEmail(value.Trim());
+            _email = value.Trim();
+        }
+    }
 
     // ---------- Конструктори з ланцюжком виклику ----------
 

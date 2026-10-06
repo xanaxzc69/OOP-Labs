@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace ClinicApp.Utils;
 
@@ -12,6 +13,11 @@ public static class ClinicValidator
     public const int PhoneLength = 10;
     public const int MinYear = 1900;
 
+    // Задача 5. Регулярні вирази створюються один раз (static readonly),
+    // а не на кожному виклику методу — це помітно швидше.
+    private static readonly Regex PhoneRegex = new Regex(@"^\d{10}$");
+    private static readonly Regex EmailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$");
+
     // Ім'я або прізвище: не порожнє, не з самих пробілів, не довше 50 символів
     public static void ValidateName(string value, string fieldName)
     {
@@ -21,17 +27,19 @@ public static class ClinicValidator
             throw new ArgumentException($"{fieldName} не може бути довшим за {MaxNameLength} символів");
     }
 
-    // Телефон: рівно 10 символів і всі вони — цифри
+    // Телефон: рівно 10 цифр. Замість циклу по символах — один Regex.IsMatch
     public static void ValidatePhone(string phone)
     {
-        if (phone == null || phone.Length != PhoneLength)
-            throw new ArgumentException($"Телефон має містити рівно {PhoneLength} символів");
+        if (phone == null || !PhoneRegex.IsMatch(phone))
+            throw new ArgumentException($"Телефон має містити рівно {PhoneLength} цифр");
+    }
 
-        foreach (char symbol in phone)
-        {
-            if (!char.IsDigit(symbol))
-                throw new ArgumentException("Телефон має складатися лише з цифр");
-        }
+    // Email: базовий формат «щось@щось.домен».
+    // Порожній рядок означає «email невідомий» і перевіряється окремо в Patient.
+    public static void ValidateEmail(string email)
+    {
+        if (email == null || !EmailRegex.IsMatch(email))
+            throw new ArgumentException("Некоректний формат email (очікується вигляд name@example.com)");
     }
 
     // Дата: не в майбутньому і не раніше 1900 року

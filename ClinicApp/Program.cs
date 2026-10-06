@@ -221,6 +221,9 @@ class Program
                  () => { Appointment a = new Appointment(1, 1, DateTime.Today.AddDays(1), 0); });
         TryBlock("Графік 20–6", () => { WorkSchedule w = new WorkSchedule(20, 6); });
         TryBlock("Графік із годиною 25", () => { WorkSchedule w = new WorkSchedule(9, 25); });
+        TryBlock("Email без домену", () => { clinic.Patients[0].Email = "andriy@mail"; });
+        TryBlock("Коректний email", () => { clinic.Patients[0].Email = "andriy@example.com"; });
+        TryBlock("Порожній email (дозволено)", () => { clinic.Patients[0].Email = ""; });
 
         Console.WriteLine("Жоден із цих випадків не зіпсував дані — програма працює далі.");
         Console.WriteLine();
@@ -301,12 +304,15 @@ class Program
                 BloodType? bloodType = ReadEnum<BloodType>("Оберіть групу крові:");
                 if (bloodType == null) continue;
                 string phone = ReadText("Телефон: ");
+                string email = ReadText("Email (можна пропустити): ");
 
                 // Задача 4: дані вводить користувач, тому виняток із валідатора —
                 // очікувана ситуація. Перехоплюємо його і продовжуємо роботу.
                 try
                 {
-                    clinic.Patients.Add(new Patient(firstName, lastName, dob.Value, bloodType.Value, phone));
+                    Patient patient = new Patient(firstName, lastName, dob.Value, bloodType.Value, phone);
+                    patient.Email = email;
+                    clinic.Patients.Add(patient);
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {
