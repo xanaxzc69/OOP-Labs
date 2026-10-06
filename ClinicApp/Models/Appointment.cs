@@ -6,17 +6,23 @@ namespace ClinicApp.Models;
 // Запис пацієнта до лікаря.
 // Статус — кінцевий автомат:
 //   Scheduled -> Cancelled  або  Scheduled -> Completed  (лише один раз).
-// Задача 1: статус тепер не рядок, а enum AppointmentStatus,
-// тому неможливо присвоїти неіснуючий стан — це перевіряє компілятор.
 public class Appointment
 {
     private static int _nextId = 1;
+
+    // Задача 2: приватне поле + явна властивість через нього
+    private int _durationMinutes;
 
     public int Id { get; }
     public int PatientId { get; }
     public int DoctorId { get; }
     public DateTime ScheduledAt { get; }
-    public int DurationMinutes { get; }
+
+    public int DurationMinutes
+    {
+        get { return _durationMinutes; }
+        set { _durationMinutes = value; }
+    }
 
     // Ззовні — тільки читання; змінюються лише через Cancel()/Complete()
     public AppointmentStatus Status { get; private set; }
@@ -29,7 +35,7 @@ public class Appointment
         PatientId = patientId;
         DoctorId = doctorId;
         ScheduledAt = scheduledAt;
-        DurationMinutes = durationMinutes;
+        DurationMinutes = durationMinutes;   // присвоєння через властивість
         Status = AppointmentStatus.Scheduled;
     }
 

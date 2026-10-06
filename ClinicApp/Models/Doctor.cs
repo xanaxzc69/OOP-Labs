@@ -9,24 +9,48 @@ public class Doctor
 {
     private static int _nextId = 1;
 
+    // Задача 2: приватні поля + явні властивості через них
+    private string _firstName;
+    private string _lastName;
+    private string _licenseNumber;
+    private string _phone;
+
     public int Id { get; }
 
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+    public string FirstName
+    {
+        get { return _firstName; }
+        set { _firstName = value; }
+    }
 
-    // Задача 1: замість string — перерахування Speciality
+    public string LastName
+    {
+        get { return _lastName; }
+        set { _lastName = value; }
+    }
+
+    public string LicenseNumber
+    {
+        get { return _licenseNumber; }
+        set { _licenseNumber = value; }
+    }
+
+    public string Phone
+    {
+        get { return _phone; }
+        set { _phone = value; }
+    }
+
+    // Перерахування Speciality
     public Speciality Speciality { get; set; }
 
-    public string LicenseNumber { get; set; }
-    public string Phone { get; set; }
-
-    // Задача 2: два окремих поля WorkStartHour/WorkEndHour замінено
-    // одним нероздільним значенням типу WorkSchedule
+    // Робочий графік — один нероздільний value type (struct WorkSchedule)
     public WorkSchedule Schedule { get; set; }
 
     // ---------- Конструктори ----------
 
-    // Повний конструктор. Графік за замовчуванням: 8:00–17:00
+    // Повний конструктор. Графік за замовчуванням: 8:00–17:00.
+    // Значення присвоюються через властивості, а не напряму в поля.
     public Doctor(string firstName, string lastName, Speciality speciality, string licenseNumber, string phone)
     {
         Id = _nextId++;
@@ -53,7 +77,6 @@ public class Doctor
 
     public string FullName => FirstName + " " + LastName;
 
-    // Робота з графіком делегується структурі WorkSchedule
     public int WorkingHoursPerDay => Schedule.HoursPerDay;
 
     public bool IsAvailableNow => Schedule.IsNow;
@@ -67,7 +90,6 @@ public class Doctor
     public override string ToString()
     {
         string status = IsAvailableNow ? "доступний зараз" : "недоступний зараз";
-        // Задача 3: форматування винесено у статичний клас ClinicFormatter
         return $"[{Id}] {FullName} | {ClinicFormatter.FormatSpeciality(Speciality)} | {LicenseNumber} | " +
                $"Тел: {ClinicFormatter.FormatPhone(Phone)} | {Schedule.Display} ({WorkingHoursPerDay} год) | {status}";
     }

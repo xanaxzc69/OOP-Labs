@@ -10,22 +10,49 @@ public class Patient
     // Статичний лічильник — один для всіх екземплярів класу
     private static int _nextId = 1;
 
+    // Задача 2: дані зберігаються у приватних полях,
+    // доступ до них — лише через властивості
+    private string _firstName;
+    private string _lastName;
+    private DateTime _dateOfBirth;
+    private string _phone;
+
     // Id лише для читання, присвоюється тільки в конструкторі
     public int Id { get; }
 
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public DateTime DateOfBirth { get; set; }
+    public string FirstName
+    {
+        get { return _firstName; }
+        set { _firstName = value; }
+    }
 
-    // Задача 1: замість string — перерахування BloodType
+    public string LastName
+    {
+        get { return _lastName; }
+        set { _lastName = value; }
+    }
+
+    public DateTime DateOfBirth
+    {
+        get { return _dateOfBirth; }
+        set { _dateOfBirth = value; }
+    }
+
+    public string Phone
+    {
+        get { return _phone; }
+        set { _phone = value; }
+    }
+
+    // Перерахування BloodType — некоректне значення неможливе за типом
     public BloodType BloodType { get; set; }
 
-    public string Phone { get; set; }
     public string Email { get; set; } = "";
 
     // ---------- Конструктори з ланцюжком виклику ----------
 
-    // Повний конструктор — уся ініціалізація тут
+    // Повний конструктор — уся ініціалізація тут.
+    // Значення присвоюються через властивості, а не напряму в поля.
     public Patient(string firstName, string lastName, DateTime dateOfBirth, BloodType bloodType, string phone)
     {
         Id = _nextId++;
@@ -79,7 +106,7 @@ public class Patient
 
     public override string ToString()
     {
-        // Задача 3: форматування винесено у статичний клас ClinicFormatter
+        // Форматування винесено у статичний клас ClinicFormatter
         return $"[{Id}] {FullName} | Вік: {ClinicFormatter.FormatAge(Age)} ({GetAgeCategory()}) | " +
                $"Кров: {ClinicFormatter.FormatBloodType(BloodType)} | Тел: {ClinicFormatter.FormatPhone(Phone)}";
     }
