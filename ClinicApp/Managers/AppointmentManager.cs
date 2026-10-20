@@ -1,4 +1,5 @@
 using System;
+using ClinicApp.Interfaces;
 using ClinicApp.Models;
 
 namespace ClinicApp.Managers;
@@ -164,6 +165,24 @@ public class AppointmentManager
             if (_appointments[i].IsUpcoming) result[index++] = _appointments[i];
         }
         return result;
+    }
+
+    // ---------- Задача 2. Споживач контракту ICancellable ----------
+
+    // Метод нічого не знає про Appointment — лише про те, що кожен елемент
+    // масиву можна спробувати скасувати. Завтра сюди можна передати
+    // масив будь-яких інших об'єктів, які підписали цей контракт.
+    public static int CancelAll(ICancellable[] items, string reason = "")
+    {
+        if (items == null) return 0;
+
+        int cancelled = 0;
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (items[i] == null) continue;
+            if (items[i].Cancel(reason)) cancelled++;
+        }
+        return cancelled;
     }
 
     // ---------- Зміна статусу (делегуємо об'єкту Appointment) ----------

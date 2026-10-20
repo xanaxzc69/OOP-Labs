@@ -8,9 +8,10 @@ namespace ClinicApp.Models;
 // Запис пацієнта до лікаря.
 // Статус — кінцевий автомат:
 //   Scheduled -> Cancelled  або  Scheduled -> Completed  (лише один раз).
-// Задача 1: клас підписує контракт IPayable — зобов'язується
-// вміти показати суму, ознаку оплати і провести оплату.
-public class Appointment : IPayable
+// Задача 2: один клас підписує одразу два контракти.
+// Для коду, що працює через IPayable, це «щось, що можна оплатити»,
+// для коду через ICancellable — «щось, що можна скасувати».
+public class Appointment : IPayable, ICancellable
 {
     private static int _nextId = 1;
 
@@ -21,6 +22,7 @@ public class Appointment : IPayable
     // Задача 1: приватна ознака оплати — ззовні змінити її можна
     // лише через MarkPaid(), і лише за правилами клініки
     private bool _isPaid = false;
+
 
     // Тариф клініки: 10 грн за кожну хвилину прийому
     public const decimal PricePerMinute = 10m;
@@ -61,6 +63,14 @@ public class Appointment : IPayable
 
     public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
 
+    // ---------- Реалізація контракту ICancellable ----------
+
+    // Стан не дублюється: чи скасовано — випливає зі Status,
+    // а причина — з приміток, які вже зберігає сам запис
+    public bool IsCancelled => Status == AppointmentStatus.Cancelled;
+
+    public string CancellationReason => IsCancelled ? Notes : "";
+
     // ---------- Реалізація контракту IPayable ----------
 
     public decimal Amount => DurationMinutes * PricePerMinute;
@@ -70,7 +80,8 @@ public class Appointment : IPayable
     // Оплатити можна лише не скасований і ще не оплачений запис
     public bool MarkPaid()
     {
-        if (Status == AppointmentStatus.Cancelled) return false;
+        // Спираємось на властивість контракту, а не на перевірку Status
+        if (IsCancelled) return false;
         if (_isPaid) return false;
 
         _isPaid = true;
