@@ -1,11 +1,14 @@
 using System;
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
 // Лікар клініки з робочим графіком
-public class Doctor
+// Задача 3: розклад мають саме лікарі, тому контракт ISchedulable
+// підписує Doctor, а не Appointment.
+public class Doctor : ISchedulable
 {
     private static int _nextId = 1;
 
@@ -104,6 +107,34 @@ public class Doctor
     public bool CanAcceptAt(int hour)
     {
         return Schedule.Contains(hour);
+    }
+
+    // ---------- Реалізація контракту ISchedulable ----------
+
+    // Чи потрапляє вказаний момент часу в робочий графік
+    public bool CanSchedule(DateTime at)
+    {
+        return Schedule.Contains(at.Hour);
+    }
+
+    // Цілогодинні слоти на вказаний день, починаючи з початку розкладу.
+    // Їх не більше за slotCount і не більше, ніж годин у розкладі.
+    public DateTime[] GetAvailableSlots(DateTime date, int slotCount)
+    {
+        ClinicValidator.ValidatePositive(slotCount, "Кількість слотів");
+
+        int count = slotCount;
+        if (count > Schedule.HoursPerDay)
+        {
+            count = Schedule.HoursPerDay;
+        }
+
+        DateTime[] slots = new DateTime[count];
+        for (int i = 0; i < count; i++)
+        {
+            slots[i] = date.Date.AddHours(Schedule.Start + i);
+        }
+        return slots;
     }
 
     public override string ToString()
