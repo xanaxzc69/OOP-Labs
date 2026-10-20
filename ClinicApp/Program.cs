@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Text;
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Managers;
 using ClinicApp.Models;
 using ClinicApp.Utils;
@@ -39,6 +40,7 @@ class Program
         DemoOverloads();
         DemoValidation();
         DemoPolymorphism();
+        DemoInterfaces();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -304,6 +306,54 @@ class Program
         }
     }
 
+    // ===== Задачі 1-3. Демонстрація інтерфейсів =====
+    static void DemoInterfaces()
+    {
+        Console.WriteLine("=== Інтерфейси: один об'єкт — кілька контрактів ===");
+
+        Appointment[] appointments = clinic.Appointments.GetAll();
+        if (appointments.Length == 0) return;
+
+        // Той самий об'єкт під двома «обличчями»
+        IPayable payable = appointments[0];
+        ICancellable cancellable = appointments[0];
+        Console.WriteLine($"Запис #{appointments[0].Id}: сума {payable.Amount} грн " +
+                          $"({appointments[0].DurationMinutes} хв × {Appointment.PricePerMinute} грн)");
+        Console.WriteLine($"  як IPayable: оплачено? {payable.IsPaid}");
+        Console.WriteLine($"  як ICancellable: скасовано? {cancellable.IsCancelled}");
+        Console.WriteLine($"  MarkPaid() -> {payable.MarkPaid()}, повторно -> {payable.MarkPaid()}");
+
+        // Скасований запис оплатити не можна
+        Appointment cancelled = null;
+        for (int i = 0; i < appointments.Length; i++)
+        {
+            if (appointments[i].IsCancelled) cancelled = appointments[i];
+        }
+        if (cancelled != null)
+        {
+            Console.WriteLine($"Скасований запис #{cancelled.Id} (причина: {cancelled.CancellationReason}) " +
+                              $"-> MarkPaid() = {cancelled.MarkPaid()}");
+        }
+
+        // Розрахунок бачить лише контракт IPayable
+        Console.WriteLine($"Заборгованість клініки: {clinic.Billing.GetTotalDebt()} грн");
+
+        // Лікар під контрактом ISchedulable
+        Doctor doctor = clinic.Doctors[0];
+        if (doctor != null)
+        {
+            ISchedulable schedulable = doctor;
+            DateTime[] slots = schedulable.GetAvailableSlots(DateTime.Today.AddDays(1), 3);
+            Console.Write($"Слоти лікаря {doctor.FullName} на завтра:");
+            for (int i = 0; i < slots.Length; i++)
+            {
+                Console.Write(" " + slots[i].ToString("HH:mm"));
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();
+    }
+
     // ===== Головне меню =====
     static void MainMenu()
     {
@@ -311,12 +361,13 @@ class Program
         {
             Console.WriteLine();
             Console.WriteLine("===== ГОЛОВНЕ МЕНЮ =====");
-            Console.WriteLine("1. Пацієнти");
-            Console.WriteLine("2. Лікарі");
-            Console.WriteLine("3. Записи");
-            Console.WriteLine("4. Медична картка");
-            Console.WriteLine("5. Звіт клініки");
-            Console.WriteLine("6. Розклад на дату");
+            Console.WriteLine("1. Пацієнти — картотека пацієнтів");
+            Console.WriteLine("2. Лікарі — лікарі, графіки та вільні години");
+            Console.WriteLine("3. Записи — прийоми до лікарів");
+            Console.WriteLine("4. Медична картка — діагнози, аналізи, рецепти");
+            Console.WriteLine("5. Рахунки — оплата та заборгованість");
+            Console.WriteLine("6. Звіт клініки — зведена статистика");
+            Console.WriteLine("7. Розклад на дату — прийоми на обраний день");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -325,8 +376,9 @@ class Program
             else if (choice == "2") DoctorsMenu();
             else if (choice == "3") AppointmentsMenu();
             else if (choice == "4") MedicalRecordsMenu();
-            else if (choice == "5") clinic.GenerateReport();
-            else if (choice == "6") ScheduleMenu();
+            else if (choice == "5") BillingMenu();
+            else if (choice == "6") clinic.GenerateReport();
+            else if (choice == "7") ScheduleMenu();
             else Console.WriteLine("Невідомий пункт меню.");
         }
     }
@@ -445,10 +497,11 @@ class Program
             Console.WriteLine("2. Додати");
             Console.WriteLine("3. Знайти за спеціальністю (текст)");
             Console.WriteLine("4. Видалити");
-            Console.WriteLine("5. Статистика");
-            Console.WriteLine("6. Лікар за номером у списку (індексатор)");
-            Console.WriteLine("7. Знайти за спеціальністю (зі списку)");
-            Console.WriteLine("8. Знайти за ID");
+            Console.WriteLine("5. Вільні години лікаря");
+            Console.WriteLine("6. Статистика");
+            Console.WriteLine("7. Лікар за номером у списку (індексатор)");
+            Console.WriteLine("8. Знайти за спеціальністю (зі списку)");
+            Console.WriteLine("9. Знайти за ID");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -479,16 +532,20 @@ class Program
             }
             else if (choice == "5")
             {
-                clinic.Doctors.DisplayStats();
+                ShowDoctorSlots();
             }
             else if (choice == "6")
+            {
+                clinic.Doctors.DisplayStats();
+            }
+            else if (choice == "7")
             {
                 int? index = ReadInt($"Номер у списку (0 - {clinic.Doctors.Count - 1}): ");
                 if (index == null) continue;
                 Doctor doctor = clinic.Doctors[index.Value];
                 Console.WriteLine(doctor != null ? doctor.ToString() : "Лікаря з таким номером немає.");
             }
-            else if (choice == "7")
+            else if (choice == "8")
             {
                 Speciality? speciality = ReadEnum<Speciality>("Оберіть спеціальність:");
                 if (speciality == null) continue;
@@ -496,7 +553,7 @@ class Program
                 if (found.Length == 0) Console.WriteLine("Лікарів такої спеціальності немає.");
                 for (int i = 0; i < found.Length; i++) Console.WriteLine(found[i]);
             }
-            else if (choice == "8")
+            else if (choice == "9")
             {
                 int? id = ReadInt("ID лікаря: ");
                 if (id == null) continue;
@@ -558,7 +615,8 @@ class Program
             Console.WriteLine("5. Записи пацієнта");
             Console.WriteLine("6. Записи лікаря");
             Console.WriteLine("7. Майбутні записи");
-            Console.WriteLine("8. Записи на дату (рік, місяць, день)");
+            Console.WriteLine("8. Скасувати всі записи пацієнта");
+            Console.WriteLine("9. Записи на дату (рік, місяць, день)");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -638,6 +696,10 @@ class Program
                 clinic.Appointments.DisplayList(clinic.Appointments.GetUpcoming());
             }
             else if (choice == "8")
+            {
+                CancelAllForPatient();
+            }
+            else if (choice == "9")
             {
                 int? year = ReadInt("Рік: ");
                 if (year == null) continue;
@@ -800,6 +862,115 @@ class Program
         catch (ArgumentException ex)
         {
             Console.WriteLine("Помилка: " + ex.Message);
+        }
+    }
+
+    // ===== Задача 3-4. Вільні години лікаря через контракт ISchedulable =====
+    static void ShowDoctorSlots()
+    {
+        clinic.Doctors.DisplayAll();
+        int? doctorId = ReadInt("ID лікаря: ");
+        if (doctorId == null) return;
+
+        Doctor doctor = clinic.Doctors.FindById(doctorId.Value);
+        if (doctor == null)
+        {
+            Console.WriteLine("Лікаря з таким ID не знайдено.");
+            return;
+        }
+
+        DateTime? date = ReadDate("Дата (дд.мм.рррр, Enter — завтра): ", true);
+        if (date == null) return;
+
+        int? slotCount = ReadInt("Скільки слотів показати: ");
+        if (slotCount == null) return;
+
+        // Змінна оголошена типом контракту: далі код бачить не лікаря,
+        // а «щось, у чого є розклад»
+        ISchedulable schedulable = doctor;
+
+        try
+        {
+            DateTime[] slots = schedulable.GetAvailableSlots(date.Value, slotCount.Value);
+            Console.WriteLine($"Вільні години: {doctor.FullName}, {date.Value.ToString("dd.MM.yyyy")}");
+            if (slots.Length == 0)
+            {
+                Console.WriteLine("  слотів немає");
+            }
+            for (int i = 0; i < slots.Length; i++)
+            {
+                Console.WriteLine($"  {slots[i].ToString("HH:mm")}");
+            }
+            Console.WriteLine($"Чи приймає о {date.Value.AddHours(12).ToString("HH:mm")}? " +
+                              $"{schedulable.CanSchedule(date.Value.AddHours(12))}");
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            Console.WriteLine("Помилка: " + ex.Message);
+        }
+    }
+
+    // ===== Задача 2-4. Групове скасування через контракт ICancellable =====
+    static void CancelAllForPatient()
+    {
+        int? patientId = ReadInt("ID пацієнта: ");
+        if (patientId == null) return;
+        string reason = ReadText("Причина (можна пропустити): ");
+
+        Appointment[] appointments = clinic.Appointments.GetByPatient(patientId.Value);
+
+        // Передаємо масив контрактів: CancelAll не знає, що це прийоми
+        ICancellable[] items = new ICancellable[appointments.Length];
+        for (int i = 0; i < appointments.Length; i++)
+        {
+            items[i] = appointments[i];
+        }
+
+        int cancelled = AppointmentManager.CancelAll(items, reason);
+        Console.WriteLine($"Скасовано записів: {cancelled} з {items.Length}");
+    }
+
+    // ===== Задача 4. Підменю «Рахунки» =====
+    static void BillingMenu()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("--- Рахунки ---");
+            Console.WriteLine("1. Усі рахунки");
+            Console.WriteLine("2. Неоплачені рахунки");
+            Console.WriteLine("3. Оплатити запис");
+            Console.WriteLine("4. Звіт по оплатах");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                clinic.Billing.DisplayAllPayables();
+            }
+            else if (choice == "2")
+            {
+                clinic.Billing.DisplayUnpaid();
+            }
+            else if (choice == "3")
+            {
+                clinic.Appointments.DisplayList(clinic.Appointments.GetAll());
+                int? id = ReadInt("Номер запису: ");
+                if (id == null) continue;
+                if (clinic.Billing.Pay(id.Value))
+                    Console.WriteLine("Запис оплачено.");
+                else
+                    Console.WriteLine("Неможливо: запису немає, він уже оплачений або скасований.");
+            }
+            else if (choice == "4")
+            {
+                clinic.Billing.DisplayReport();
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
         }
     }
 
