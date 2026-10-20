@@ -1,5 +1,6 @@
 using System;
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
@@ -7,13 +8,22 @@ namespace ClinicApp.Models;
 // Запис пацієнта до лікаря.
 // Статус — кінцевий автомат:
 //   Scheduled -> Cancelled  або  Scheduled -> Completed  (лише один раз).
-public class Appointment
+// Задача 1: клас підписує контракт IPayable — зобов'язується
+// вміти показати суму, ознаку оплати і провести оплату.
+public class Appointment : IPayable
 {
     private static int _nextId = 1;
 
     // Задача 2: приватне поле + явна властивість через нього.
     // Задача 4: перевірку виконує ClinicValidator
     private int _durationMinutes;
+
+    // Задача 1: приватна ознака оплати — ззовні змінити її можна
+    // лише через MarkPaid(), і лише за правилами клініки
+    private bool _isPaid = false;
+
+    // Тариф клініки: 10 грн за кожну хвилину прийому
+    public const decimal PricePerMinute = 10m;
 
     public int Id { get; }
     public int PatientId { get; }
@@ -51,6 +61,22 @@ public class Appointment
 
     public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
 
+    // ---------- Реалізація контракту IPayable ----------
+
+    public decimal Amount => DurationMinutes * PricePerMinute;
+
+    public bool IsPaid => _isPaid;
+
+    // Оплатити можна лише не скасований і ще не оплачений запис
+    public bool MarkPaid()
+    {
+        if (Status == AppointmentStatus.Cancelled) return false;
+        if (_isPaid) return false;
+
+        _isPaid = true;
+        return true;
+    }
+
     // ---------- Переходи стану ----------
 
     public bool Cancel(string reason = "")
@@ -79,8 +105,9 @@ public class Appointment
 
     public override string ToString()
     {
+        string payment = IsPaid ? "оплачено" : $"до сплати {Amount} грн";
         string result = $"[{Id}] Пацієнт #{PatientId} → Лікар #{DoctorId} | " +
-                        $"{ScheduledAt.ToString("dd.MM.yyyy HH:mm")}–{EndsAt.ToString("HH:mm")} | {Status}";
+                        $"{ScheduledAt.ToString("dd.MM.yyyy HH:mm")}–{EndsAt.ToString("HH:mm")} | {Status} | {payment}";
         if (Notes.Length > 0)
         {
             result += " | " + Notes;
