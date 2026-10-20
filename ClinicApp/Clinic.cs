@@ -14,6 +14,9 @@ public class Clinic
     public DoctorManager Doctors { get; }
     public AppointmentManager Appointments { get; }
 
+    // Задача 4: клініка отримує ще один менеджер — медичних записів
+    public MedicalRecordManager MedicalRecords { get; }
+
     public Clinic(string name)
     {
         Name = name;
@@ -21,6 +24,7 @@ public class Clinic
         Patients = new PatientManager();
         Doctors = new DoctorManager();
         Appointments = new AppointmentManager(Patients, Doctors);
+        MedicalRecords = new MedicalRecordManager();
     }
 
     // Розклад на конкретну дату
