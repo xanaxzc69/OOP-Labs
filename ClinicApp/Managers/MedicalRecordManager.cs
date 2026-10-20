@@ -3,7 +3,7 @@ using ClinicApp.Models;
 
 namespace ClinicApp.Managers;
 
-// Задача 2. Поліморфний масив: в одному масиві MedicalRecord[]
+// Задачі 2-3. Поліморфний масив: в одному масиві MedicalRecord[]
 // живуть діагнози, аналізи й рецепти. Менеджер не знає, який саме
 // об'єкт лежить у комірці, — кожен запис сам показує свій рядок.
 public class MedicalRecordManager
@@ -84,6 +84,140 @@ public class MedicalRecordManager
             if (_records[i].DoctorId == doctorId) result[index++] = _records[i];
         }
         return result;
+    }
+
+    // ---------- Задача 3. Фільтрація за реальним типом об'єкта ----------
+    // is — перевіряє тип, as — безпечно приводить (повертає null замість винятку)
+
+    public Diagnosis[] GetDiagnoses(int patientId)
+    {
+        MedicalRecord[] records = GetByPatient(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            if (records[i] is Diagnosis) matches++;
+        }
+
+        Diagnosis[] result = new Diagnosis[matches];
+        int index = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            Diagnosis diagnosis = records[i] as Diagnosis;
+            if (diagnosis != null) result[index++] = diagnosis;
+        }
+        return result;
+    }
+
+    public LabResult[] GetLabResults(int patientId)
+    {
+        MedicalRecord[] records = GetByPatient(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            if (records[i] is LabResult) matches++;
+        }
+
+        LabResult[] result = new LabResult[matches];
+        int index = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            LabResult labResult = records[i] as LabResult;
+            if (labResult != null) result[index++] = labResult;
+        }
+        return result;
+    }
+
+    public Prescription[] GetPrescriptions(int patientId)
+    {
+        MedicalRecord[] records = GetByPatient(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            if (records[i] is Prescription) matches++;
+        }
+
+        Prescription[] result = new Prescription[matches];
+        int index = 0;
+        for (int i = 0; i < records.Length; i++)
+        {
+            Prescription prescription = records[i] as Prescription;
+            if (prescription != null) result[index++] = prescription;
+        }
+        return result;
+    }
+
+    // Лише хронічні діагнози
+    public Diagnosis[] GetChronicDiagnoses(int patientId)
+    {
+        Diagnosis[] diagnoses = GetDiagnoses(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < diagnoses.Length; i++)
+        {
+            if (diagnoses[i].IsChronic) matches++;
+        }
+
+        Diagnosis[] result = new Diagnosis[matches];
+        int index = 0;
+        for (int i = 0; i < diagnoses.Length; i++)
+        {
+            if (diagnoses[i].IsChronic) result[index++] = diagnoses[i];
+        }
+        return result;
+    }
+
+    // Лише рецепти, курс яких ще не закінчився
+    public Prescription[] GetActivePrescriptions(int patientId)
+    {
+        Prescription[] prescriptions = GetPrescriptions(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < prescriptions.Length; i++)
+        {
+            if (prescriptions[i].IsActive()) matches++;
+        }
+
+        Prescription[] result = new Prescription[matches];
+        int index = 0;
+        for (int i = 0; i < prescriptions.Length; i++)
+        {
+            if (prescriptions[i].IsActive()) result[index++] = prescriptions[i];
+        }
+        return result;
+    }
+
+    // Зведена медична картка пацієнта
+    public void DisplayPatientSummary(int patientId)
+    {
+        Diagnosis[] diagnoses = GetDiagnoses(patientId);
+        LabResult[] labResults = GetLabResults(patientId);
+        Prescription[] prescriptions = GetPrescriptions(patientId);
+
+        Console.WriteLine($"=== Медична картка пацієнта #{patientId} ===");
+        Console.WriteLine($"Діагнозів: {diagnoses.Length}, аналізів: {labResults.Length}, рецептів: {prescriptions.Length}");
+
+        Diagnosis[] chronic = GetChronicDiagnoses(patientId);
+        if (chronic.Length > 0)
+        {
+            Console.WriteLine("Хронічні діагнози:");
+            for (int i = 0; i < chronic.Length; i++)
+            {
+                Console.WriteLine($"  - {chronic[i].GetSummary()}");
+            }
+        }
+
+        Prescription[] active = GetActivePrescriptions(patientId);
+        if (active.Length > 0)
+        {
+            Console.WriteLine("Активні рецепти:");
+            for (int i = 0; i < active.Length; i++)
+            {
+                Console.WriteLine($"  - {active[i].GetSummary()} (до {active[i].ExpiresAt.ToString("dd.MM.yyyy")})");
+            }
+        }
     }
 
     // ---------- Вивід ----------
