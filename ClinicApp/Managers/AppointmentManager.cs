@@ -37,17 +37,42 @@ public class AppointmentManager
     }
 
     // ---------- Створення запису з валідацією ----------
+    // Задача 3: звичайний прийом тепер створюється підкласом RegularAppointment
     public bool Book(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
-        Patient patient = _patients.FindById(patientId);
-        if (patient == null)
+        if (!CanBook(patientId, doctorId)) return false;
+
+        return Register(new RegularAppointment(patientId, doctorId, scheduledAt, durationMinutes));
+    }
+
+    // Терміновий прийом із причиною терміновості
+    public bool BookUrgent(int patientId, int doctorId, DateTime scheduledAt,
+                           string urgencyNote = "", int durationMinutes = 30)
+    {
+        if (!CanBook(patientId, doctorId)) return false;
+
+        return Register(new UrgentAppointment(patientId, doctorId, scheduledAt, urgencyNote, durationMinutes));
+    }
+
+    // Консультація спеціаліста із темою консультації
+    public bool BookSpecialist(int patientId, int doctorId, DateTime scheduledAt,
+                               string consultationTopic = "", int durationMinutes = 30)
+    {
+        if (!CanBook(patientId, doctorId)) return false;
+
+        return Register(new SpecialistAppointment(patientId, doctorId, scheduledAt, consultationTopic, durationMinutes));
+    }
+
+    // Перевірки однакові для всіх трьох методів, тому зібрані в одному місці
+    private bool CanBook(int patientId, int doctorId)
+    {
+        if (_patients.FindById(patientId) == null)
         {
             Console.WriteLine($"Помилка: пацієнта з ID {patientId} не знайдено.");
             return false;
         }
 
-        Doctor doctor = _doctors.FindById(doctorId);
-        if (doctor == null)
+        if (_doctors.FindById(doctorId) == null)
         {
             Console.WriteLine($"Помилка: лікаря з ID {doctorId} не знайдено.");
             return false;
@@ -59,10 +84,19 @@ public class AppointmentManager
             return false;
         }
 
-        Appointment appointment = new Appointment(patientId, doctorId, scheduledAt, durationMinutes);
+        return true;
+    }
+
+    // Метод приймає базовий тип, тому однаково кладе в масив будь-який вид прийому
+    private bool Register(Appointment appointment)
+    {
         _appointments[_count++] = appointment;
-        Console.WriteLine($"Запис [{appointment.Id}] створено: {patient.FullName} → {doctor.FullName} " +
-                          $"о {scheduledAt.ToString("dd.MM.yyyy HH:mm")}");
+
+        Patient patient = _patients.FindById(appointment.PatientId);
+        Doctor doctor = _doctors.FindById(appointment.DoctorId);
+        Console.WriteLine($"Запис [{appointment.Id}] створено: {appointment.GetDescription()} | " +
+                          $"{patient.FullName} → {doctor.FullName} о " +
+                          $"{appointment.ScheduledAt.ToString("dd.MM.yyyy HH:mm")} | {appointment.GetCost()} грн");
         return true;
     }
 

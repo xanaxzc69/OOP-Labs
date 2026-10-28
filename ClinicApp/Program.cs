@@ -41,6 +41,7 @@ class Program
         DemoValidation();
         DemoPolymorphism();
         DemoInterfaces();
+        DemoNewVersusOverride();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -88,11 +89,16 @@ class Program
     static void SeedAppointments()
     {
         DateTime tomorrow = DateTime.Today.AddDays(1);
-        clinic.Appointments.Book(1, 1, tomorrow.AddHours(9));
-        clinic.Appointments.Book(3, 2, tomorrow.AddHours(11), 45);
-        clinic.Appointments.Book(5, 3, tomorrow.AddHours(15));
-        clinic.Appointments.Book(2, 1, tomorrow.AddHours(10), 20);
-        clinic.Appointments.Book(4, 2, tomorrow.AddHours(12));
+
+        // Задача 3: кожен вид прийому створюється своїм методом менеджера
+        clinic.Appointments.Book(1, 1, tomorrow.AddHours(9));                 // звичайний
+        clinic.Appointments.Book(3, 2, tomorrow.AddHours(11), 45);            // звичайний
+        clinic.Appointments.BookUrgent(5, 3, tomorrow.AddHours(15),
+                                       "гострий біль", 20);                   // терміновий
+        clinic.Appointments.BookUrgent(2, 1, tomorrow.AddHours(10),
+                                       "висока температура");                 // терміновий
+        clinic.Appointments.BookSpecialist(4, 2, tomorrow.AddHours(12),
+                                           "кардіологія", 40);                // консультація
 
         // Некоректні ID — менеджер їх відхиляє
         clinic.Appointments.Book(99, 1, tomorrow.AddHours(13));
@@ -304,6 +310,46 @@ class Program
         {
             Console.WriteLine($"  {title} -> ArgumentException: {ex.Message}");
         }
+    }
+
+    // ===== Задача 3. new проти override =====
+    static void DemoNewVersusOverride()
+    {
+        Console.WriteLine("=== Поліморфізм: new проти override ===");
+
+        DateTime tomorrow = DateTime.Today.AddDays(1);
+        UrgentAppointment urgent = new UrgentAppointment(1, 1, tomorrow.AddHours(8), "кровотеча", 30);
+
+        // Та сама змінна базового типу вказує на об'єкт підкласу
+        Appointment asBase = urgent;
+
+        Console.WriteLine($"Тип змінної: Appointment, реальний тип об'єкта: {urgent.GetType().Name}");
+        Console.WriteLine($"asBase.GetDescription() -> {asBase.GetDescription()}");
+        Console.WriteLine($"asBase.GetPriority()    -> {asBase.GetPriority()}");
+        Console.WriteLine($"urgent.GetPriority()    -> {urgent.GetPriority()}");
+        Console.WriteLine($"asBase.GetCost()        -> {asBase.GetCost()} грн " +
+                          $"(базова ціна {Appointment.PricePerMinute * 30} грн + 50%)");
+
+        // Відповіді на запитання задачі:
+        //
+        // 1. Чому GetDescription() через змінну типу Appointment дає опис термінового прийому?
+        //    Бо метод оголошений virtual, а в підкласі — override. Для віртуальних методів
+        //    .NET використовує пізнє зв'язування: потрібна реалізація обирається під час
+        //    виконання за РЕАЛЬНИМ типом об'єкта, а не за типом змінної.
+        //
+        // 2. Чому GetPriority() через ту саму змінну повертає 3, хоча об'єкт — UrgentAppointment?
+        //    Бо в Appointment цей метод не віртуальний, а в UrgentAppointment оголошений
+        //    через new. new не перевизначає метод, а лише приховує його: компілятор обирає
+        //    реалізацію на етапі компіляції за ТИПОМ ЗМІННОЇ. Змінна має тип Appointment,
+        //    тому викликається метод батька, який повертає 3.
+        //
+        // 3. Що треба змінити, щоб GetPriority() теж працював поліморфно?
+        //    В Appointment оголосити метод як public virtual int GetPriority(),
+        //    а в UrgentAppointment замінити new на override. Тоді вибір реалізації
+        //    теж відбуватиметься за реальним типом об'єкта, і через змінну базового
+        //    типу повертатиметься 1.
+
+        Console.WriteLine();
     }
 
     // ===== Задачі 1-3. Демонстрація інтерфейсів =====
