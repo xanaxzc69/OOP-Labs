@@ -312,6 +312,27 @@ class Program
         }
     }
 
+    // ===== Задача 4. Перегляд записів за видом прийому =====
+    static void ShowAppointmentsByType()
+    {
+        Console.WriteLine();
+        Console.WriteLine("Який вид прийому показати?");
+        Console.WriteLine("1. Термінові");
+        Console.WriteLine("2. Консультації спеціаліста");
+        Console.WriteLine("3. Звичайні");
+        string choice = ReadText("Ваш вибір: ");
+        if (inputClosed) return;
+
+        if (choice == "1")
+            clinic.Appointments.DisplayList(clinic.Appointments.GetUrgent());
+        else if (choice == "2")
+            clinic.Appointments.DisplayList(clinic.Appointments.GetSpecialist());
+        else if (choice == "3")
+            clinic.Appointments.DisplayList(clinic.Appointments.GetRegular());
+        else
+            Console.WriteLine("Невідомий варіант.");
+    }
+
     // ===== Задача 3. new проти override =====
     static void DemoNewVersusOverride()
     {
@@ -662,7 +683,8 @@ class Program
             Console.WriteLine("6. Записи лікаря");
             Console.WriteLine("7. Майбутні записи");
             Console.WriteLine("8. Скасувати всі записи пацієнта");
-            Console.WriteLine("9. Записи на дату (рік, місяць, день)");
+            Console.WriteLine("9. За типом прийому");
+            Console.WriteLine("10. Записи на дату (рік, місяць, день)");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -746,6 +768,10 @@ class Program
                 CancelAllForPatient();
             }
             else if (choice == "9")
+            {
+                ShowAppointmentsByType();
+            }
+            else if (choice == "10")
             {
                 int? year = ReadInt("Рік: ");
                 if (year == null) continue;

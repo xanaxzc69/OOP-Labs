@@ -219,6 +219,60 @@ public class AppointmentManager
         return cancelled;
     }
 
+    // ---------- Задача 4. Вибірки за видом прийому ----------
+    // Масив зберігає базовий тип, тому реальний тип перевіряємо оператором is
+
+    public Appointment[] GetUrgent()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is UrgentAppointment) matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is UrgentAppointment) result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
+    public Appointment[] GetSpecialist()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is SpecialistAppointment) matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is SpecialistAppointment) result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
+    public Appointment[] GetRegular()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is RegularAppointment) matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is RegularAppointment) result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
     // ---------- Зміна статусу (делегуємо об'єкту Appointment) ----------
 
     public bool Cancel(int id, string reason = "")
@@ -251,8 +305,10 @@ public class AppointmentManager
         string patientName = patient != null ? patient.FullName : $"Пацієнт #{a.PatientId}";
         string doctorName = doctor != null ? doctor.FullName : $"Лікар #{a.DoctorId}";
 
-        string line = $"[{a.Id}] {patientName} → {doctorName} | " +
-                      $"{a.ScheduledAt.ToString("dd.MM.yyyy HH:mm")}–{a.EndsAt.ToString("HH:mm")} | {a.Status}";
+        // Опис і вартість бере сам об'єкт: цей код не знає, який це вид прийому
+        string line = $"[{a.Id}] {a.GetDescription()} | {patientName} → {doctorName} | " +
+                      $"{a.ScheduledAt.ToString("dd.MM.yyyy HH:mm")}–{a.EndsAt.ToString("HH:mm")} | " +
+                      $"{a.Status} | {a.GetCost()} грн";
         if (a.Notes.Length > 0)
         {
             line += " | " + a.Notes;
