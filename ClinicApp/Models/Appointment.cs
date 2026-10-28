@@ -71,9 +71,33 @@ public class Appointment : IPayable, ICancellable
 
     public string CancellationReason => IsCancelled ? Notes : "";
 
+    // ---------- Задача 1. Віртуальні методи ----------
+
+    // virtual означає «підклас має право замінити цю поведінку».
+    // Базова формула: тривалість у хвилинах × тариф.
+    public virtual decimal GetCost()
+    {
+        return DurationMinutes * PricePerMinute;
+    }
+
+    // Опис запису; кожен вид прийому описує себе по-своєму
+    public virtual string GetDescription()
+    {
+        return "Прийом";
+    }
+
+    // Навмисно НЕ virtual: у Задачі 3 на цьому методі видно різницю
+    // між override (вибір за реальним типом об'єкта) і new (вибір за типом змінної)
+    public int GetPriority()
+    {
+        return 3;
+    }
+
     // ---------- Реалізація контракту IPayable ----------
 
-    public decimal Amount => DurationMinutes * PricePerMinute;
+    // Властивість контракту спирається на віртуальний метод, тому
+    // менеджер рахунків автоматично бачить ціну того підкласу, який реально створено
+    public decimal Amount => GetCost();
 
     public bool IsPaid => _isPaid;
 
@@ -116,13 +140,13 @@ public class Appointment : IPayable, ICancellable
 
     public override string ToString()
     {
-        string payment = IsPaid ? "оплачено" : $"до сплати {Amount} грн";
-        string result = $"[{Id}] Пацієнт #{PatientId} → Лікар #{DoctorId} | " +
+        string payment = IsPaid ? "оплачено" : "не оплачено";
+        string result = $"{GetDescription()} [{Id}] Пацієнт #{PatientId} → Лікар #{DoctorId} | " +
                         $"{ScheduledAt.ToString("dd.MM.yyyy HH:mm")}–{EndsAt.ToString("HH:mm")} | {Status} | {payment}";
         if (Notes.Length > 0)
         {
             result += " | " + Notes;
         }
-        return result;
+        return result + $" | {GetCost()} грн";
     }
 }
