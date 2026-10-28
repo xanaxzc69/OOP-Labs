@@ -71,13 +71,36 @@ public class Appointment : IPayable, ICancellable
 
     public string CancellationReason => IsCancelled ? Notes : "";
 
+    // ---------- Задача 5. VIP-знижка ----------
+
+    // Обрано Варіант А — множник знижки в базовому класі.
+    // Чому: знижка не залежить від виду прийому, тому не потребує нових підкласів.
+    // Якби для кожного типу робили окремий VIP-підклас, їх було б уже три,
+    // а з дитячим і пенсійним тарифами — дев'ять. Множник же враховується
+    // в базовій ціні, тож підкласи не змінюються взагалі: їхній base.GetCost()
+    // уже повертає ціну зі знижкою, і множення на 1.5 чи 1.3 дає потрібний результат.
+    private decimal _discountMultiplier = 1m;
+
+    // 1 — без знижки, 0.8 — VIP-знижка 20%
+    public decimal DiscountMultiplier
+    {
+        get { return _discountMultiplier; }
+        set
+        {
+            if (value <= 0 || value > 1)
+                throw new ArgumentOutOfRangeException(nameof(DiscountMultiplier),
+                    "Множник знижки має бути в межах від 0 до 1");
+            _discountMultiplier = value;
+        }
+    }
+
     // ---------- Задача 1. Віртуальні методи ----------
 
     // virtual означає «підклас має право замінити цю поведінку».
-    // Базова формула: тривалість у хвилинах × тариф.
+    // Базова формула: тривалість у хвилинах × тариф × множник знижки.
     public virtual decimal GetCost()
     {
-        return DurationMinutes * PricePerMinute;
+        return DurationMinutes * PricePerMinute * DiscountMultiplier;
     }
 
     // Опис запису; кожен вид прийому описує себе по-своєму

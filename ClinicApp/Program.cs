@@ -42,6 +42,7 @@ class Program
         DemoPolymorphism();
         DemoInterfaces();
         DemoNewVersusOverride();
+        DemoVipDiscount();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -310,6 +311,40 @@ class Program
         {
             Console.WriteLine($"  {title} -> ArgumentException: {ex.Message}");
         }
+    }
+
+    // ===== Задача 5. VIP-знижка 20% для будь-якого виду прийому =====
+    static void DemoVipDiscount()
+    {
+        Console.WriteLine("=== VIP-знижка 20% ===");
+
+        DateTime tomorrow = DateTime.Today.AddDays(1);
+
+        Appointment regular = new RegularAppointment(1, 1, tomorrow.AddHours(9), 30);
+        Appointment urgent = new UrgentAppointment(1, 1, tomorrow.AddHours(9), "гострий біль", 30);
+        Appointment specialist = new SpecialistAppointment(1, 1, tomorrow.AddHours(9), "кардіологія", 30);
+
+        Console.WriteLine("Без знижки:");
+        Console.WriteLine($"  {regular.GetDescription()}: {regular.GetCost()} грн");
+        Console.WriteLine($"  {urgent.GetDescription()}: {urgent.GetCost()} грн");
+        Console.WriteLine($"  {specialist.GetDescription()}: {specialist.GetCost()} грн");
+
+        // Один і той самий рядок коду робить VIP-ом будь-який вид прийому:
+        // підкласи для цього не знадобились
+        regular.DiscountMultiplier = 0.8m;
+        urgent.DiscountMultiplier = 0.8m;
+        specialist.DiscountMultiplier = 0.8m;
+
+        Console.WriteLine("Зі знижкою 20%:");
+        Console.WriteLine($"  {regular.GetDescription()}: {regular.GetCost()} грн");
+        Console.WriteLine($"  {urgent.GetDescription()}: {urgent.GetCost()} грн (базова × 1.5 × 0.8)");
+        Console.WriteLine($"  {specialist.GetDescription()}: {specialist.GetCost()} грн (базова × 1.3 × 0.8)");
+
+        // Перевірка варіанта з підкласами показала, чому він не підходить:
+        // клас VipUrgentAppointment : UrgentAppointment не компілюється в частині
+        // GetDescription(), бо той оголошений як sealed override і далі не перевизначається,
+        // а успадкуватись від SpecialistAppointment узагалі неможливо — це sealed class.
+        Console.WriteLine();
     }
 
     // ===== Задача 4. Перегляд записів за видом прийому =====
