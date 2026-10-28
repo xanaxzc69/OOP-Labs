@@ -10,7 +10,8 @@ namespace ClinicApp.Managers;
 // що з'явиться пізніше. Достатньо, щоб об'єкт умів показати Amount і IsPaid.
 public class BillingManager
 {
-    private AppointmentManager _appointments;
+    // Джерело записів задається один раз у конструкторі й більше не змінюється
+    private readonly AppointmentManager _appointments;
 
     public BillingManager(AppointmentManager appointments)
     {
@@ -36,7 +37,7 @@ public class BillingManager
         return total;
     }
 
-    // Сума несплаченого
+    // Сума несплаченого. Скасований запис не оплачується, тому в борг не входить
     public static decimal CalculateDebt(IPayable[] items)
     {
         if (items == null) return 0;
@@ -44,10 +45,22 @@ public class BillingManager
         decimal debt = 0;
         for (int i = 0; i < items.Length; i++)
         {
-            if (items[i] == null) continue;
-            if (!items[i].IsPaid) debt += items[i].Amount;
+            if (IsDebt(items[i])) debt += items[i].Amount;
         }
         return debt;
+    }
+
+    // Запис створює борг, якщо він ще не оплачений і не скасований.
+    // Перевірка йде через контракт ICancellable, а не через конкретний клас
+    private static bool IsDebt(IPayable item)
+    {
+        if (item == null) return false;
+        if (item.IsPaid) return false;
+
+        ICancellable cancellable = item as ICancellable;
+        if (cancellable != null && cancellable.IsCancelled) return false;
+
+        return true;
     }
 
     // ---------- Робота з записами клініки ----------
@@ -72,16 +85,60 @@ public class BillingManager
         int matches = 0;
         for (int i = 0; i < payables.Length; i++)
         {
-            if (!payables[i].IsPaid) matches++;
+            if (IsDebt(payables[i])) matches++;
         }
 
         IPayable[] result = new IPayable[matches];
         int index = 0;
         for (int i = 0; i < payables.Length; i++)
         {
-            if (!payables[i].IsPaid) result[index++] = payables[i];
+            if (IsDebt(payables[i])) result[index++] = payables[i];
         }
         return result;
+    }
+
+    // Неоплачені записи конкретного пацієнта
+    public IPayable[] GetUnpaidByPatient(int patientId)
+    {
+        Appointment[] appointments = _appointments.GetByPatient(patientId);
+
+        int matches = 0;
+        for (int i = 0; i < appointments.Length; i++)
+        {
+            if (IsDebt(appointments[i])) matches++;
+        }
+
+        IPayable[] result = new IPayable[matches];
+        int index = 0;
+        for (int i = 0; i < appointments.Length; i++)
+        {
+            if (IsDebt(appointments[i])) result[index++] = appointments[i];
+        }
+        return result;
+    }
+
+    // Борг конкретного пацієнта: вибірка за пацієнтом, а сума — через контракт IPayable
+    public decimal GetPatientDebt(int patientId)
+    {
+        return CalculateDebt(GetUnpaidByPatient(patientId));
+    }
+
+    public void DisplayPatientDebt(int patientId)
+    {
+        IPayable[] unpaid = GetUnpaidByPatient(patientId);
+
+        Console.WriteLine($"=== Борг пацієнта #{patientId} ===");
+        if (unpaid.Length == 0)
+        {
+            Console.WriteLine("Боргів немає.");
+            return;
+        }
+
+        for (int i = 0; i < unpaid.Length; i++)
+        {
+            Console.WriteLine($"  {unpaid[i]}");
+        }
+        Console.WriteLine($"Разом до сплати: {GetPatientDebt(patientId)} грн");
     }
 
     public decimal GetTotalDebt()

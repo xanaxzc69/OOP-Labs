@@ -1048,6 +1048,7 @@ class Program
             Console.WriteLine("2. Неоплачені рахунки");
             Console.WriteLine("3. Оплатити запис");
             Console.WriteLine("4. Звіт по оплатах");
+            Console.WriteLine("5. Борг пацієнта");
             Console.WriteLine("0. Назад");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -1073,6 +1074,12 @@ class Program
             else if (choice == "4")
             {
                 clinic.Billing.DisplayReport();
+            }
+            else if (choice == "5")
+            {
+                int? patientId = ReadInt("ID пацієнта: ");
+                if (patientId == null) continue;
+                clinic.Billing.DisplayPatientDebt(patientId.Value);
             }
             else
             {
