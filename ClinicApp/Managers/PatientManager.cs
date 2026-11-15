@@ -1,77 +1,81 @@
 using System;
+using System.Collections.Generic;
 using ClinicApp.Models;
 using ClinicApp.Enums;
 
 namespace ClinicApp.Managers;
 
-// Задача 3. Колекція пацієнтів на масиві фіксованого розміру
+// Задача 1 (Lab09). Внутрішнє сховище — узагальнена колекція List<Patient>
+// замість масиву фіксованого розміру з ручним лічильником.
+//
+// Що це змінило всередині:
+//   - зник штучний ліміт MaxPatients: список росте сам;
+//   - зник лічильник _count: список сам знає свій розмір;
+//   - у Remove() більше немає ручного зсуву елементів ліворуч;
+//   - пошукові методи більше не роблять два проходи (порахувати збіги,
+//     потім заповнити масив точного розміру) — вони накопичують результат
+//     у проміжний List<Patient> і в кінці віддають ToArray().
+//
+// Зовнішній API не змінився: Add, FindById, TryFindById, GetAll, FindByName,
+// FindByBloodType, Remove, Count, індексатор, DisplayAll, DisplayStats
+// працюють так само, тому решта програми заміни навіть не помічає.
 public class PatientManager
 {
-    private const int MaxPatients = 100;
+    // List<T> — типізована колекція: у неї не можна покласти нічого,
+    // крім Patient, і при читанні не потрібне приведення типу.
+    private List<Patient> _patients = new List<Patient>();
 
-    private Patient[] _patients = new Patient[MaxPatients];
-    private int _count = 0;
+    public int Count => _patients.Count;
 
-    public int Count => _count;
-
-    // Задача 3. Індексатор: clinic.Patients[2] замість FindById(3).
-    // Якщо індексу немає — повертаємо null (зручно для ?. та ??).
+    // Індексатор: clinic.Patients[2]. Поведінка збережена —
+    // при виході за межі повертаємо null, а не кидаємо виняток.
     public Patient this[int index]
     {
         get
         {
-            if (index < 0 || index >= _count) return null;
+            if (index < 0 || index >= _patients.Count) return null;
             return _patients[index];
         }
     }
 
     // ---------- Create ----------
+    // Перевірки ліміту більше немає: колекція розширюється автоматично
     public bool Add(Patient patient)
     {
-        if (_count == MaxPatients)
-        {
-            Console.WriteLine($"Помилка: досягнуто ліміт у {MaxPatients} пацієнтів.");
-            return false;
-        }
+        if (patient == null) return false;
 
-        _patients[_count++] = patient;
+        _patients.Add(patient);
         Console.WriteLine($"Пацієнта [{patient.Id}] {patient.FullName} додано.");
         return true;
     }
 
     // ---------- Read ----------
+    // Копію назовні віддаємо масивом, щоб зовнішній код не міг
+    // змінити внутрішній список клініки
     public Patient[] GetAll()
     {
-        Patient[] result = new Patient[_count];
-        for (int i = 0; i < _count; i++)
-        {
-            result[i] = _patients[i];
-        }
-        return result;
+        return _patients.ToArray();
     }
 
     // Лінійний пошук; null, якщо не знайдено
     public Patient FindById(int id)
     {
-        for (int i = 0; i < _count; i++)
+        foreach (Patient patient in _patients)
         {
-            if (_patients[i].Id == id)
-            {
-                return _patients[i];
-            }
+            if (patient.Id == id) return patient;
         }
         return null;
     }
 
-    // Задача 4. Патерн TryXxx: метод повертає bool (успіх/невдача),
+    // Патерн TryXxx: метод повертає bool (успіх/невдача),
     // а сам знайдений об'єкт віддає через параметр out.
     public bool TryFindById(int id, out Patient patient)
     {
-        for (int i = 0; i < _count; i++)
+        foreach (Patient candidate in _patients)
         {
-            if (_patients[i].Id == id)
+            if (candidate.Id == id)
             {
-                patient = _patients[i];
+                patient = candidate;
                 return true;
             }
         }
@@ -79,115 +83,89 @@ public class PatientManager
         return false;
     }
 
-    // Задача 4. Пошук за групою крові (точне співпадіння за enum)
+    // Пошук за групою крові: один прохід, результат накопичується у списку
     public Patient[] FindByBloodType(BloodType bloodType)
     {
-        int matches = 0;
-        for (int i = 0; i < _count; i++)
+        List<Patient> found = new List<Patient>();
+        foreach (Patient patient in _patients)
         {
-            if (_patients[i].BloodType == bloodType) matches++;
+            if (patient.BloodType == bloodType) found.Add(patient);
         }
-
-        Patient[] result = new Patient[matches];
-        int index = 0;
-        for (int i = 0; i < _count; i++)
-        {
-            if (_patients[i].BloodType == bloodType) result[index++] = _patients[i];
-        }
-        return result;
+        return found.ToArray();
     }
 
-    // Двопрохідний патерн: 1) рахуємо збіги, 2) заповнюємо масив точного розміру
+    // Пошук за частиною імені або прізвища — теж один прохід
     public Patient[] FindByName(string query)
     {
+        List<Patient> found = new List<Patient>();
+        if (query == null) return found.ToArray();
+
         string q = query.ToLower();
-
-        int matches = 0;
-        for (int i = 0; i < _count; i++)
+        foreach (Patient patient in _patients)
         {
-            if (_patients[i].FirstName.ToLower().Contains(q) || _patients[i].LastName.ToLower().Contains(q))
+            if (patient.FirstName.ToLower().Contains(q) || patient.LastName.ToLower().Contains(q))
             {
-                matches++;
+                found.Add(patient);
             }
         }
-
-        Patient[] result = new Patient[matches];
-        int index = 0;
-        for (int i = 0; i < _count; i++)
-        {
-            if (_patients[i].FirstName.ToLower().Contains(q) || _patients[i].LastName.ToLower().Contains(q))
-            {
-                result[index++] = _patients[i];
-            }
-        }
-        return result;
+        return found.ToArray();
     }
 
     // ---------- Delete ----------
-    // Знаходимо індекс, зсуваємо елементи ліворуч, обнуляємо останній слот
+    // Ручний зсув елементів більше не потрібен — список робить це сам
     public bool Remove(int id)
     {
-        for (int i = 0; i < _count; i++)
-        {
-            if (_patients[i].Id == id)
-            {
-                for (int j = i; j < _count - 1; j++)
-                {
-                    _patients[j] = _patients[j + 1];
-                }
-                _patients[_count - 1] = null;
-                _count--;
-                return true;
-            }
-        }
-        return false;
+        Patient patient = FindById(id);
+        if (patient == null) return false;
+
+        return _patients.Remove(patient);
     }
 
     // ---------- Вивід ----------
     public void DisplayAll()
     {
-        Console.WriteLine($"=== Пацієнти ({_count} / {MaxPatients}) ===");
-        if (_count == 0)
+        Console.WriteLine($"=== Пацієнти ({_patients.Count}) ===");
+        if (_patients.Count == 0)
         {
             Console.WriteLine("Список порожній.");
             return;
         }
-        for (int i = 0; i < _count; i++)
+        foreach (Patient patient in _patients)
         {
-            Console.WriteLine(_patients[i]);
+            Console.WriteLine(patient);
         }
     }
 
-    // Уся статистика обчислюється за ОДИН прохід по масиву
+    // Уся статистика обчислюється за ОДИН прохід по колекції
     public void DisplayStats()
     {
         Console.WriteLine("=== Статистика пацієнтів ===");
-        if (_count == 0)
+        if (_patients.Count == 0)
         {
             Console.WriteLine("Список порожній.");
             return;
         }
 
         int totalAge = 0;
-        int minIdx = 0;
-        int maxIdx = 0;
+        Patient youngest = _patients[0];
+        Patient oldest = _patients[0];
         int adultsCount = 0;
 
-        for (int i = 0; i < _count; i++)
+        foreach (Patient patient in _patients)
         {
-            int age = _patients[i].Age;
+            int age = patient.Age;
             totalAge += age;
-            if (age < _patients[minIdx].Age) minIdx = i;
-            if (age > _patients[maxIdx].Age) maxIdx = i;
-            if (_patients[i].IsAdult) adultsCount++;
+            if (age < youngest.Age) youngest = patient;
+            if (age > oldest.Age) oldest = patient;
+            if (patient.IsAdult) adultsCount++;
         }
 
-        double averageAge = (double)totalAge / _count;
+        double averageAge = (double)totalAge / _patients.Count;
 
-        Console.WriteLine($"Всього: {_count}");
+        Console.WriteLine($"Всього: {_patients.Count}");
         Console.WriteLine($"Середній вік: {averageAge:F1} р.");
-        Console.WriteLine($"Наймолодший: {_patients[minIdx].FullName} ({_patients[minIdx].Age} р.)");
-        Console.WriteLine($"Найстарший: {_patients[maxIdx].FullName} ({_patients[maxIdx].Age} р.)");
-        Console.WriteLine($"Дорослих: {adultsCount} з {_count}");
+        Console.WriteLine($"Наймолодший: {youngest.FullName} ({youngest.Age} р.)");
+        Console.WriteLine($"Найстарший: {oldest.FullName} ({oldest.Age} р.)");
+        Console.WriteLine($"Дорослих: {adultsCount} з {_patients.Count}");
     }
 }
