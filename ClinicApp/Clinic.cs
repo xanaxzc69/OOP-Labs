@@ -29,6 +29,10 @@ public class Clinic
     // читає записи, лікарів і пацієнтів через уже створені менеджери.
     public AnalyticsManager Analytics { get; }
 
+    // Задача 5 (Lab11): плани лікування. Менеджер сам перевіряє кожен план
+    // через ModelValidator, тому в клініку потрапляють лише коректні записи.
+    public TreatmentPlanManager TreatmentPlans { get; }
+
     public Clinic(string name)
     {
         Name = name;
@@ -40,6 +44,7 @@ public class Clinic
         Billing = new BillingManager(Appointments);
         WaitingRoom = new WaitingQueue<Patient>();
         Analytics = new AnalyticsManager(Appointments, Doctors, Patients);
+        TreatmentPlans = new TreatmentPlanManager();
     }
 
     // Розклад на конкретну дату

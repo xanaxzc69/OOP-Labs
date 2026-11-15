@@ -46,6 +46,7 @@ class Program
         DemoNewVersusOverride();
         DemoVipDiscount();
         DemoRepository();
+        SeedTreatmentPlans();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -474,7 +475,8 @@ class Program
             Console.WriteLine("6. Черга — очікування, прийом");
             Console.WriteLine("7. Звіт клініки — зведена статистика");
             Console.WriteLine("8. Аналітика — рейтинги лікарів і пацієнтів");
-            Console.WriteLine("9. Розклад на дату — прийоми на обраний день");
+            Console.WriteLine("9. Плани лікування — рефлексія, атрибути");
+            Console.WriteLine("10. Розклад на дату — прийоми на обраний день");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -487,8 +489,133 @@ class Program
             else if (choice == "6") WaitingRoomMenu(clinic);
             else if (choice == "7") clinic.GenerateReport();
             else if (choice == "8") AnalyticsMenu(clinic);
-            else if (choice == "9") ScheduleMenu();
+            else if (choice == "9") TreatmentPlansMenu(clinic);
+            else if (choice == "10") ScheduleMenu();
             else Console.WriteLine("Невідомий пункт меню.");
+        }
+    }
+
+    // ===== Задача 5 (Lab11). Початкові плани лікування =====
+    // Останній план навмисно складено з помилками, щоб одразу було видно,
+    // що валідатор справді працює: порожній діагноз, від'ємна вартість
+    // і нульова тривалість не дають плану потрапити у сховище.
+    static void SeedTreatmentPlans()
+    {
+        Console.WriteLine();
+        Console.WriteLine("=== Плани лікування: перевірка за атрибутами ===");
+
+        clinic.TreatmentPlans.Add(new TreatmentPlan(2, "Гіпертонія, стадія I", 30, 4500m));
+
+        TreatmentPlan second = new TreatmentPlan(3, "Реабілітація після перелому", 45, 7800m);
+        second.Description = "Лікувальна фізкультура двічі на тиждень.";
+        clinic.TreatmentPlans.Add(second);
+
+        // Навмисно некоректний план
+        TreatmentPlan broken = new TreatmentPlan();
+        broken.PatientId = 0;          // порушує [MinValue(1)]
+        broken.Diagnosis = "   ";      // порушує [Required] — самі пробіли
+        broken.DurationDays = 0;       // порушує [MinValue(1)]
+        broken.Cost = -100m;           // порушує [MinValue(0)]
+        clinic.TreatmentPlans.Add(broken);
+
+        Console.WriteLine($"Успішно додано планів: {clinic.TreatmentPlans.Count} із 3 спроб.");
+        Console.WriteLine();
+    }
+
+    // ===== Задача 5 (Lab11). Підменю «Плани лікування» =====
+    //
+    // Меню показує всі три можливості, які дала рефлексія:
+    //   - форма введення будується автоматично за метаданими типу;
+    //   - перевірка полів іде за атрибутами, а не за жорстким кодом;
+    //   - будову типу можна показати, не створюючи жодного об'єкта.
+    static void TreatmentPlansMenu(Clinic clinic)
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"--- Плани лікування ({clinic.TreatmentPlans.Count}) ---");
+            Console.WriteLine("1. Показати всі");
+            Console.WriteLine("2. Додати через автоматичну форму");
+            Console.WriteLine("3. Будова типу TreatmentPlan (рефлексія)");
+            Console.WriteLine("4. Перевірити план валідатором");
+            Console.WriteLine("5. Змінити стан плану");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                clinic.TreatmentPlans.DisplayAll();
+            }
+            else if (choice == "2")
+            {
+                // FormBuilder сам питає значення кожного поля з відкритим
+                // сеттером; Id і Status він не питає, бо вони лише для читання
+                TreatmentPlan plan = FormBuilder.Build<TreatmentPlan>();
+
+                // Додавання не гарантоване: менеджер спершу проганяє план
+                // через ModelValidator і відхиляє невалідний
+                clinic.TreatmentPlans.Add(plan);
+            }
+            else if (choice == "3")
+            {
+                // Об'єкт не створюється — передається лише сам тип
+                ModelValidator.PrintInfo(typeof(TreatmentPlan));
+            }
+            else if (choice == "4")
+            {
+                int? id = ReadInt("ID плану: ");
+                if (id == null) continue;
+
+                TreatmentPlan plan = clinic.TreatmentPlans.GetById(id.Value);
+                if (plan == null)
+                {
+                    Console.WriteLine($"План з ID {id.Value} не знайдено.");
+                    continue;
+                }
+
+                Console.WriteLine(plan);
+                ValidationResult result = ModelValidator.Validate(plan);
+                result.Display($"Перевірка плану [{plan.Id}]");
+            }
+            else if (choice == "5")
+            {
+                int? id = ReadInt("ID плану: ");
+                if (id == null) continue;
+
+                TreatmentPlan plan = clinic.TreatmentPlans.GetById(id.Value);
+                if (plan == null)
+                {
+                    Console.WriteLine($"План з ID {id.Value} не знайдено.");
+                    continue;
+                }
+
+                Console.WriteLine($"Поточний стан: {plan.Status}");
+                Console.WriteLine("1. Активувати  2. Завершити  3. Скасувати");
+                string action = ReadText("Дія: ");
+                if (inputClosed) return;
+
+                bool changed;
+                string actionName;
+                if (action == "1") { changed = clinic.TreatmentPlans.Activate(id.Value); actionName = "активувати"; }
+                else if (action == "2") { changed = clinic.TreatmentPlans.Complete(id.Value); actionName = "завершити"; }
+                else if (action == "3") { changed = clinic.TreatmentPlans.Cancel(id.Value); actionName = "скасувати"; }
+                else { Console.WriteLine("Невідома дія."); continue; }
+
+                // Недопустимий перехід — не аварія: просто повідомляємо про це
+                if (changed)
+                {
+                    Console.WriteLine($"Готово. Новий стан: {plan.Status}");
+                }
+                else
+                {
+                    Console.WriteLine($"Неможливо {actionName}: план у стані {plan.Status}.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
         }
     }
 
