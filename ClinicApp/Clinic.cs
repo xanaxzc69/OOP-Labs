@@ -20,6 +20,11 @@ public class Clinic
     // Задача 4: менеджер рахунків; працює поверх менеджера записів
     public BillingManager Billing { get; }
 
+    // Задача 3 (Lab09): жива черга очікування в реєстратурі.
+    // Тип підставляється один раз — WaitingQueue<Patient>, і далі компілятор
+    // сам стежить, щоб у чергу потрапляли лише пацієнти.
+    public WaitingQueue<Patient> WaitingRoom { get; }
+
     public Clinic(string name)
     {
         Name = name;
@@ -29,6 +34,7 @@ public class Clinic
         Appointments = new AppointmentManager(Patients, Doctors);
         MedicalRecords = new MedicalRecordManager();
         Billing = new BillingManager(Appointments);
+        WaitingRoom = new WaitingQueue<Patient>();
     }
 
     // Розклад на конкретну дату
