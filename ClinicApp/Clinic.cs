@@ -25,6 +25,10 @@ public class Clinic
     // сам стежить, щоб у чергу потрапляли лише пацієнти.
     public WaitingQueue<Patient> WaitingRoom { get; }
 
+    // Задача 4 (Lab10): аналітичний модуль. Власних даних не має —
+    // читає записи, лікарів і пацієнтів через уже створені менеджери.
+    public AnalyticsManager Analytics { get; }
+
     public Clinic(string name)
     {
         Name = name;
@@ -35,6 +39,7 @@ public class Clinic
         MedicalRecords = new MedicalRecordManager();
         Billing = new BillingManager(Appointments);
         WaitingRoom = new WaitingQueue<Patient>();
+        Analytics = new AnalyticsManager(Appointments, Doctors, Patients);
     }
 
     // Розклад на конкретну дату
