@@ -1,11 +1,14 @@
 using System;
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
 // Пацієнт медичної клініки
-public class Patient
+// Задача 4 (Lab09): підписує контракт IIdentifiable — потрібна властивість Id
+// у класі вже є, тож додається лише сам контракт, без змін у логіці.
+public class Patient : IIdentifiable
 {
     // Статичний лічильник — один для всіх екземплярів класу
     private static int _nextId = 1;

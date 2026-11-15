@@ -43,6 +43,7 @@ class Program
         DemoInterfaces();
         DemoNewVersusOverride();
         DemoVipDiscount();
+        DemoRepository();
         MainMenu();
 
         Console.WriteLine("До побачення!");
@@ -485,6 +486,52 @@ class Program
             else if (choice == "8") ScheduleMenu();
             else Console.WriteLine("Невідомий пункт меню.");
         }
+    }
+
+    // ===== Задача 4 (Lab09). Демонстрація Repository<T> =====
+    // Один і той самий клас обслуговує різні сутності клініки: різниця
+    // лише в тому, який тип підставлено замість T. Обидва типи підписали
+    // IIdentifiable, тому обмеження where T : IIdentifiable виконано.
+    static void DemoRepository()
+    {
+        Console.WriteLine();
+        Console.WriteLine("=== Repository<T>: узагальнений CRUD з обмеженням типу ===");
+
+        Repository<Patient> patientRepo = new Repository<Patient>();
+        foreach (Patient patient in clinic.Patients.GetAll())
+        {
+            patientRepo.Add(patient);
+        }
+        Console.WriteLine($"У сховищі пацієнтів: {patientRepo.Count}");
+
+        Repository<Doctor> doctorRepo = new Repository<Doctor>();
+        foreach (Doctor doctor in clinic.Doctors.GetAll())
+        {
+            doctorRepo.Add(doctor);
+        }
+        Console.WriteLine($"У сховищі лікарів: {doctorRepo.Count}");
+
+        // Пошук за ідентифікатором: сховище знає про Id лише завдяки обмеженню
+        Patient found = patientRepo.GetById(2);
+        Console.WriteLine($"GetById(2) у сховищі пацієнтів: {(found != null ? found.FullName : "не знайдено")}");
+
+        // Неіснуючий Id — звичайний результат пошуку, а не помилка
+        Patient missing = patientRepo.GetById(999);
+        Console.WriteLine($"GetById(999): {(missing != null ? missing.FullName : "не знайдено (повернуто null)")}");
+
+        // Повторне додавання того самого елемента відхиляється
+        if (found != null)
+        {
+            Console.WriteLine($"Повторне Add того самого пацієнта: {patientRepo.Add(found)}");
+        }
+
+        // Видалення повідомляє, чи справді щось прибрано
+        Console.WriteLine($"Remove(2): {patientRepo.Remove(2)} | Remove(2) вдруге: {patientRepo.Remove(2)}");
+        Console.WriteLine($"Лишилось у сховищі пацієнтів: {patientRepo.Count}");
+
+        Doctor firstDoctor = doctorRepo.GetById(1);
+        Console.WriteLine($"Лікар з Id 1: {(firstDoctor != null ? firstDoctor.FullName : "не знайдено")}");
+        Console.WriteLine();
     }
 
     // ===== Задача 3 (Lab09). Підменю «Черга» =====

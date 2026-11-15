@@ -8,7 +8,8 @@ namespace ClinicApp.Models;
 // Лікар клініки з робочим графіком
 // Задача 3: розклад мають саме лікарі, тому контракт ISchedulable
 // підписує Doctor, а не Appointment.
-public class Doctor : ISchedulable
+// Задача 4 (Lab09): до наявного ISchedulable додається IIdentifiable
+public class Doctor : ISchedulable, IIdentifiable
 {
     private static int _nextId = 1;
 

@@ -11,7 +11,9 @@ namespace ClinicApp.Models;
 // Задача 2: один клас підписує одразу два контракти.
 // Для коду, що працює через IPayable, це «щось, що можна оплатити»,
 // для коду через ICancellable — «щось, що можна скасувати».
-public class Appointment : IPayable, ICancellable
+// Задача 4 (Lab09): третій контракт — IIdentifiable, щоб записи теж
+// можна було зберігати в узагальненому Repository<T>
+public class Appointment : IPayable, ICancellable, IIdentifiable
 {
     private static int _nextId = 1;
 
