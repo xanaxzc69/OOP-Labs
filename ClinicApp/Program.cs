@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using ClinicApp.Comparators;
 using ClinicApp.Enums;
 using ClinicApp.Interfaces;
 using ClinicApp.Managers;
@@ -471,7 +473,8 @@ class Program
             Console.WriteLine("5. Рахунки — оплата та заборгованість");
             Console.WriteLine("6. Черга — очікування, прийом");
             Console.WriteLine("7. Звіт клініки — зведена статистика");
-            Console.WriteLine("8. Розклад на дату — прийоми на обраний день");
+            Console.WriteLine("8. Аналітика — рейтинги лікарів і пацієнтів");
+            Console.WriteLine("9. Розклад на дату — прийоми на обраний день");
             Console.WriteLine("0. Вихід");
             string choice = ReadText("Ваш вибір: ");
             if (inputClosed || choice == "0") return;
@@ -483,9 +486,112 @@ class Program
             else if (choice == "5") BillingMenu();
             else if (choice == "6") WaitingRoomMenu(clinic);
             else if (choice == "7") clinic.GenerateReport();
-            else if (choice == "8") ScheduleMenu();
+            else if (choice == "8") AnalyticsMenu(clinic);
+            else if (choice == "9") ScheduleMenu();
             else Console.WriteLine("Невідомий пункт меню.");
         }
+    }
+
+    // ===== Задача 5 (Lab10). Підменю «Аналітика» =====
+    //
+    // Усі п'ять звітів працюють з тими самими даними — різниця лише в тому,
+    // яким правилом їх упорядковано: природним порядком самого типу
+    // (List.Sort() без параметрів) чи окремим компаратором (List.Sort(comparer)).
+    static void AnalyticsMenu(Clinic clinic)
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("--- Аналітика ---");
+            Console.WriteLine("1. Лікарі за навантаженням (природний порядок)");
+            Console.WriteLine("2. Лікарі за виручкою");
+            Console.WriteLine("3. Лікарі за алфавітом");
+            Console.WriteLine("4. Лікарі за датою останнього прийому");
+            Console.WriteLine("5. Пацієнти: за активністю та за витратами");
+            Console.WriteLine("0. Назад");
+            string choice = ReadText("Ваш вибір: ");
+            if (inputClosed || choice == "0") return;
+
+            if (choice == "1")
+            {
+                List<DoctorStats> stats = CollectDoctorStats(clinic);
+                // Sort() без параметрів використовує CompareTo самого DoctorStats
+                stats.Sort();
+                PrintReport("Лікарі за навантаженням", stats);
+            }
+            else if (choice == "2")
+            {
+                List<DoctorStats> stats = CollectDoctorStats(clinic);
+                stats.Sort(new DoctorByRevenueComparer());
+                PrintReport("Лікарі за виручкою", stats);
+            }
+            else if (choice == "3")
+            {
+                List<DoctorStats> stats = CollectDoctorStats(clinic);
+                stats.Sort(new DoctorByNameComparer());
+                PrintReport("Лікарі за алфавітом", stats);
+            }
+            else if (choice == "4")
+            {
+                List<DoctorStats> stats = CollectDoctorStats(clinic);
+                stats.Sort(new DoctorByLastAppointmentComparer());
+                PrintReport("Лікарі за датою останнього прийому", stats);
+            }
+            else if (choice == "5")
+            {
+                List<PatientStats> stats = CollectPatientStats(clinic);
+
+                stats.Sort();                                  // природний порядок: найактивніший перший
+                PrintReport("Пацієнти за активністю", stats);
+
+                stats.Sort(new PatientBySpendingComparer());    // той самий список, інше правило
+                PrintReport("Пацієнти за витратами", stats);
+            }
+            else
+            {
+                Console.WriteLine("Невідомий пункт меню.");
+            }
+        }
+    }
+
+    // Ліниву послідовність не можна відсортувати напряму: сортування
+    // вимагає всіх елементів одразу. Тому перед Sort() перебираємо
+    // ітератор циклом foreach і збираємо результат у список.
+    static List<DoctorStats> CollectDoctorStats(Clinic clinic)
+    {
+        List<DoctorStats> result = new List<DoctorStats>();
+        foreach (DoctorStats stats in clinic.Analytics.ComputeDoctorStats())
+        {
+            result.Add(stats);
+        }
+        return result;
+    }
+
+    static List<PatientStats> CollectPatientStats(Clinic clinic)
+    {
+        List<PatientStats> result = new List<PatientStats>();
+        foreach (PatientStats stats in clinic.Analytics.ComputePatientStats())
+        {
+            result.Add(stats);
+        }
+        return result;
+    }
+
+    // Спільний вивід звіту: нумерований список з підсумком
+    static void PrintReport<T>(string title, List<T> rows)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"=== {title} ===");
+        if (rows.Count == 0)
+        {
+            Console.WriteLine("Даних немає.");
+            return;
+        }
+        for (int i = 0; i < rows.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {rows[i]}");
+        }
+        Console.WriteLine($"Усього рядків: {rows.Count}");
     }
 
     // ===== Задача 4 (Lab09). Демонстрація Repository<T> =====
